@@ -39,6 +39,11 @@ const router = createRouter({
       component: () => import('@/views/admin/AdminView.vue'),
       meta: { requiresAdmin: true },
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/NotFoundView.vue'),
+    }
   ],
 })
 
@@ -49,12 +54,12 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresAdmin) {
     if (!isAuthenticated) return '/login'
-    if (!isAdmin) return '/'
-  }
+      if (!isAdmin) return '/'
+    }
 
   if (to.meta.requiresGuest && isAuthenticated) return '/'
-  
-  return true
+    
+    return true
 })
 
 export default router
