@@ -1,5 +1,3 @@
-<!-- src/views/ProductDetailView.vue -->
-
 <template>
   <div class="detail-page">
     <!-- Navbar -->
@@ -93,6 +91,41 @@
             </div>
           </div>
 
+          <!-- 🔥 PERSONALIZAÇÃO: Nome + Número -->
+          <div class="customization-section">
+            <label class="label">Personalização (opcional)</label>
+            <div class="customization-grid">
+              <div class="custom-field">
+                <input
+                  v-model="customName"
+                  type="text"
+                  class="custom-input"
+                  placeholder="Nome (ex: FULANO)"
+                  maxlength="12"
+                />
+                <span class="field-hint">Máx. 12 caracteres</span>
+              </div>
+              <div class="custom-field">
+                <input
+                  v-model="customNumber"
+                  type="number"
+                  class="custom-input"
+                  placeholder="Número (ex: 10)"
+                  min="0"
+                  max="99"
+                />
+                <span class="field-hint">Número de 0 a 99</span>
+              </div>
+            </div>
+            <div v-if="hasCustomization" class="customization-preview">
+              <span class="preview-badge">
+                {{ customName ? customName : 'NOME' }} 
+                {{ customNumber ? `#${customNumber}` : '#00' }}
+              </span>
+              <span class="preview-info">+ R$ 49,90</span>
+            </div>
+          </div>
+
           <!-- Descrição -->
           <div v-if="product.description" class="description-section">
             <label class="label">Descrição</label>
@@ -130,6 +163,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import type { Product } from '@/types'
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598900000000'
+const CUSTOMIZATION_PRICE = 4990 // R$ 49,90 em centavos
 const APP_BASE_URL = import.meta.env.VITE_APP_URL || window.location.origin
 
 const route = useRoute()
@@ -139,6 +173,16 @@ const loading = ref(true)
 const selectedImageIdx = ref(0)
 const selectedSize = ref<string>('')
 const shareToast = ref('')
+
+// 🔥 Novos campos de personalização
+const customName = ref('')
+const customNumber = ref<number | null>(null)
+
+const hasCustomization = computed(() => !!customName.value || !!customNumber.value)
+const finalPrice = computed(() => {
+  if (!product.value) return 0
+  return product.value.basePrice + (hasCustomization.value ? CUSTOMIZATION_PRICE : 0)
+})
 
 const selectedImageUrl = computed(() =>
   product.value?.imageUrls?.[selectedImageIdx.value] || product.value?.imageUrl || ''
@@ -151,18 +195,19 @@ const numericSizesArray = computed<string[]>(() =>
 const formatPrice = (cents: number) =>
   (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+const getStock = (size: string): number => {
+  if (!product.value) return 0
+  if (product.value.enableCategoricalSizes) {
+    return product.value.stockCategoricalBySize?.[size] ?? 0
+  } else if (product.value.enableNumericSizes) {
+    return product.value.stockNumeric?.[size] ?? 0
+  }
+  return 0
+}
+
 const whatsappUrl = computed(() => {
   if (!product.value) {
     return `https://wa.me/${WHATSAPP_NUMBER}`
-  }
-
-  const getStock = (size: string): number => {
-    if (product.value!.enableCategoricalSizes) {
-      return product.value!.stockCategoricalBySize?.[size] ?? 0
-    } else if (product.value!.enableNumericSizes) {
-      return product.value!.stockNumeric?.[size] ?? 0
-    }
-    return 0
   }
 
   const hasStock = selectedSize.value && getStock(selectedSize.value) > 0
@@ -170,19 +215,27 @@ const whatsappUrl = computed(() => {
 
   let msg = ''
 
+  // Monta a personalização se houver
+  let customizationLine = ''
+  if (hasCustomization.value) {
+    const namePart = customName.value ? `Nome: ${customName.value.toUpperCase()}` : ''
+    const numberPart = customNumber.value ? `Número: ${customNumber.value}` : ''
+    customizationLine = `\n*Personalização:* ${[namePart, numberPart].filter(Boolean).join(' | ')}`
+  }
+
   if (hasStock) {
     msg = `Olá! Tenho interesse na camisa:\n\n` +
       `*${product.value.name}*\n` +
       `Time: ${product.value.club} | Temporada: ${product.value.season}\n` +
-      `Tamanho: ${selectedSize.value}\n` +
-      `Preço: ${formatPrice(product.value.basePrice)}\n\n` +
+      `Tamanho: ${selectedSize.value}${customizationLine}\n` +
+      `Preço: ${formatPrice(finalPrice.value)}\n\n` +
       `Poderia me dar mais informações?`
   } else if (isOutOfStock) {
     const requestedSize = selectedSize.value || 'não especificado'
     msg = `Olá! Gostaria de saber sobre disponibilidade futura:\n\n` +
       `*${product.value.name}*\n` +
       `Time: ${product.value.club} | Temporada: ${product.value.season}\n` +
-      `Tamanho: ${requestedSize}\n\n` +
+      `Tamanho: ${requestedSize}${customizationLine}\n\n` +
       `🔴 Produto esgotado no momento.\n` +
       `É possível fazer um pedido especial para a fabricante? Aguardo retorno.`
   }
@@ -326,5 +379,75 @@ onMounted(async () => {
   .content-grid { grid-template-columns: 1fr; gap: 32px; }
   .name { font-size: 22px; }
   .price { font-size: 24px; }
+}
+.customization-section {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.customization-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.custom-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.custom-input {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #f1f5f9;
+  transition: border-color 0.15s;
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.field-hint {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.customization-preview {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preview-badge {
+  background: #7c3aed;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.preview-info {
+  font-size: 12px;
+  color: #34d399;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .customization-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 </style>
