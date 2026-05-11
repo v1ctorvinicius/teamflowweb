@@ -1,5 +1,4 @@
 <!-- src/views/ProductDetailView.vue -->
-<!-- Versão refatorada com novo schema (systems de tamanho dinâmicos) -->
 
 <template>
   <div class="detail-page">
@@ -157,13 +156,21 @@ const whatsappUrl = computed(() => {
     return `https://wa.me/${WHATSAPP_NUMBER}`
   }
 
-  const hasStock = selectedSize.value && (product.value.stockBySize[selectedSize.value] || 0) > 0
-  const isOutOfStock = !selectedSize.value || (product.value.stockBySize[selectedSize.value] || 0) === 0
+  const getStock = (size: string): number => {
+    if (product.value!.enableCategoricalSizes) {
+      return product.value!.stockCategoricalBySize?.[size] ?? 0
+    } else if (product.value!.enableNumericSizes) {
+      return product.value!.stockNumeric?.[size] ?? 0
+    }
+    return 0
+  }
+
+  const hasStock = selectedSize.value && getStock(selectedSize.value) > 0
+  const isOutOfStock = !selectedSize.value || getStock(selectedSize.value) === 0
 
   let msg = ''
 
   if (hasStock) {
-    // Mensagem padrão para produtos com estoque
     msg = `Olá! Tenho interesse na camisa:\n\n` +
       `*${product.value.name}*\n` +
       `Time: ${product.value.club} | Temporada: ${product.value.season}\n` +
@@ -171,7 +178,6 @@ const whatsappUrl = computed(() => {
       `Preço: ${formatPrice(product.value.basePrice)}\n\n` +
       `Poderia me dar mais informações?`
   } else if (isOutOfStock) {
-    // Mensagem para produtos sem estoque
     const requestedSize = selectedSize.value || 'não especificado'
     msg = `Olá! Gostaria de saber sobre disponibilidade futura:\n\n` +
       `*${product.value.name}*\n` +
