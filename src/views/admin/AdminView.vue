@@ -289,16 +289,59 @@
               </div>
             </template>
 
-            <!-- Imagens -->
+            <!-- Imagens do Produto -->
             <div class="form-group span-2">
-              <label>URLs das imagens (uma por linha)</label>
-              <textarea 
-                v-model="imageUrlsInput" 
-                class="form-input form-textarea" 
-                placeholder="https://images.example.com/img1.jpg&#10;https://images.example.com/img2.jpg" 
-                rows="3" 
-              />
-              <span class="help-text">Primeira será a imagem principal</span>
+              <label>Imagens do Produto</label>
+              
+              <!-- Opção 1: Upload via Cloudinary -->
+              <div class="image-upload-section">
+                <div class="section-header">
+                  <span class="section-title">📁 Upload de arquivos</span>
+                  <span class="section-hint">Arraste ou clique para enviar imagens</span>
+                </div>
+                <ImageUploader ref="imageUploaderRef" @uploaded="handleImageUpload" v-model="form.imageUrls" />
+              </div>
+
+              <!-- Opção 2: URLs manuais -->
+              <div class="image-urls-section">
+                <div class="section-header">
+                  <span class="section-title">🔗 URLs manuais</span>
+                  <span class="section-hint">Uma URL por linha — a primeira será a imagem principal</span>
+                </div>
+                <textarea 
+                  v-model="imageUrlsInput" 
+                  class="form-input form-textarea" 
+                  placeholder="https://exemplo.com/imagem1.jpg&#10;https://exemplo.com/imagem2.jpg&#10;https://exemplo.com/imagem3.jpg" 
+                  rows="4"
+                />
+                <div class="urls-help">
+                  <span class="help-text">💡 Dica: Use o upload para não precisar digitar as URLs</span>
+                </div>
+              </div>
+
+              <!-- Preview das imagens -->
+              <div v-if="imageUrlsArray.length > 0" class="image-preview-section">
+                <div class="section-header">
+                  <span class="section-title">🖼️ Preview</span>
+                  <span class="section-hint">{{ imageUrlsArray.length }} imagem(ens)</span>
+                </div>
+                <div class="image-preview-grid">
+                  <div 
+                    v-for="(url, index) in imageUrlsArray" 
+                    :key="index" 
+                    class="image-preview-item"
+                    :class="{ 'is-main': index === 0 }"
+                  >
+                    <img :src="url" class="preview-image" @error="handleImageError(index)" />
+                    <div class="preview-overlay">
+                      <span v-if="index === 0" class="main-badge">Principal</span>
+                      <button class="preview-remove" @click="removeImageUrl(index)" title="Remover">
+                        <i class="pi pi-times" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Descrição -->
@@ -337,6 +380,7 @@ import { adminService } from '@/services/admin'
 import { clubsService, type Club } from '@/services/clubs'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { Product } from '@/types'
+import ImageUploader from '@/components/ImageUploader.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -360,6 +404,8 @@ const categoricalSizeOptions = ['PP', 'P', 'M', 'G', 'GG', 'XGG', '2XGG']
 const numericSizesInput = ref('')
 const imageUrlsInput = ref('')
 const placeholder = 'https://placehold.co/60x60/0f172a/334155?text=TF'
+
+const imageUploaderRef = ref<InstanceType<typeof ImageUploader> | null>(null)
 
 const emptyForm = () => ({
   name: '',
@@ -419,20 +465,39 @@ const filteredProducts = computed(() => {
 const formatPrice = (cents: number) =>
   (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-// Watchers para sincronizar inputs de texto com objetos
-watch(
-  () => imageUrlsInput.value,
-  (val) => {
-    const urls = val
-      .split('\n')
-      .map(u => u.trim())
-      .filter(u => u.length > 0)
-    form.value.imageUrls = urls
-    if (urls.length > 0) {
-      form.value.imageUrl = urls[0]
-    }
+// 🔥 Computed para preview das imagens
+const imageUrlsArray = computed(() => {
+  return imageUrlsInput.value
+    .split('\n')
+    .map(u => u.trim())
+    .filter(u => u.length > 0)
+})
+
+// 🔥 Sincroniza textarea com form.imageUrls
+watch(imageUrlsInput, (val) => {
+  const urls = val
+    .split('\n')
+    .map(u => u.trim())
+    .filter(u => u.length > 0)
+  form.value.imageUrls = urls
+  if (urls.length > 0) {
+    form.value.imageUrl = urls[0]
+  } else {
+    form.value.imageUrl = ''
   }
-)
+})
+
+// 🔥 Sincroniza form.imageUrls com textarea (quando vindo do edit)
+watch(() => form.value.imageUrls, (urls) => {
+  const currentUrls = imageUrlsInput.value
+    .split('\n')
+    .map(u => u.trim())
+    .filter(u => u.length > 0)
+  
+  if (JSON.stringify(urls) !== JSON.stringify(currentUrls)) {
+    imageUrlsInput.value = urls.join('\n')
+  }
+}, { deep: true })
 
 watch(
   () => numericSizesInput.value,
@@ -477,6 +542,31 @@ async function toggleActive(p: Product) {
   p.isActive = !p.isActive
 }
 
+// 🔥 HANDLE IMAGE UPLOAD - Recebe URLs do ImageUploader e adiciona ao textarea
+function handleImageUpload(urls: string[]) {
+  const existingUrls = imageUrlsInput.value
+    .split('\n')
+    .map(u => u.trim())
+    .filter(u => u.length > 0)
+  
+  const allUrls = [...existingUrls, ...urls]
+  imageUrlsInput.value = allUrls.join('\n')
+}
+
+// 🔥 REMOVE IMAGE URL do preview
+function removeImageUrl(index: number) {
+  const urls = imageUrlsArray.value
+  urls.splice(index, 1)
+  imageUrlsInput.value = urls.join('\n')
+}
+
+// 🔥 HANDLE IMAGE ERROR (quando URL quebrada)
+function handleImageError(index: number) {
+  console.warn(`Image failed to load at index ${index}`)
+  // Opcional: remover automaticamente
+  // removeImageUrl(index)
+}
+
 function openCreate() {
   editingProduct.value = null
   form.value = emptyForm()
@@ -488,6 +578,13 @@ function openCreate() {
 
 function openEdit(p: Product) {
   editingProduct.value = p
+  
+  const imageUrls = normalizeImageUrls(p.imageUrls) || []
+  
+  // 🔥 PARTE 3: Compatibilidade com imageUrl único
+  if (p.imageUrl && imageUrls.length === 0) {
+    imageUrls.push(p.imageUrl)
+  }
   
   form.value = {
     name: p.name,
@@ -505,11 +602,11 @@ function openEdit(p: Product) {
     basePrice: p.basePrice,
     description: p.description ?? '',
     imageUrl: p.imageUrl ?? '',
-    imageUrls: normalizeImageUrls(p.imageUrls) ?? [p.imageUrl].filter(Boolean),
+    imageUrls: imageUrls,
     isFeatured: p.isFeatured ?? false,
   }
 
-  imageUrlsInput.value = form.value.imageUrls.join('\n')
+  imageUrlsInput.value = imageUrls.join('\n')
   numericSizesInput.value = Object.keys(form.value.stockNumeric)
     .sort((a, b) => Number(a) - Number(b))
     .join(',')
@@ -533,6 +630,20 @@ async function saveProduct() {
     return
   }
 
+  // 🔥 Processa uploads pendentes do ImageUploader
+  if (imageUploaderRef.value) {
+    const uploadSuccess = await imageUploaderRef.value.savePendingUploads()
+    if (!uploadSuccess) {
+      // Erro já está setado dentro do ImageUploader
+      saving.value = false
+      return
+    }
+  }
+
+  // 🔥 Compatibilidade: primeira imagem é imageUrl, resto em imageUrls
+  const imageUrls = form.value.imageUrls || []
+  const imageUrl = imageUrls[0] || null
+
   saving.value = true
   try {
     const payload = {
@@ -550,8 +661,8 @@ async function saveProduct() {
       stockNumeric: form.value.stockNumeric,
       basePrice: form.value.basePrice,
       description: form.value.description || undefined,
-      imageUrl: form.value.imageUrl || undefined,
-      imageUrls: form.value.imageUrls.length > 0 ? form.value.imageUrls : undefined,
+      imageUrl: imageUrl,
+      imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
       isFeatured: form.value.isFeatured,
     }
 
@@ -564,6 +675,7 @@ async function saveProduct() {
       products.value.unshift(created)
     }
     closeModal()
+    await fetchProducts(pagination.value.page)
   } catch (err: any) {
     formError.value = err.response?.data?.message || 'Erro ao salvar. Tente novamente.'
   } finally {
@@ -727,4 +839,120 @@ onMounted(async () => {
 .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Seção de imagens */
+.image-upload-section,
+.image-urls-section {
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #0f172a;
+  border-radius: 10px;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.section-hint {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.urls-help {
+  margin-top: 8px;
+}
+
+.help-text {
+  font-size: 11px;
+  color: #475569;
+}
+
+/* Preview */
+.image-preview-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #334155;
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.image-preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0f172a;
+  border: 2px solid #334155;
+  transition: all 0.15s;
+}
+
+.image-preview-item.is-main {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.image-preview-item:hover .preview-overlay {
+  opacity: 1;
+}
+
+.main-badge {
+  background: #3b82f6;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.preview-remove {
+  background: #ef4444;
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.preview-remove:hover {
+  background: #dc2626;
+}
 </style>
