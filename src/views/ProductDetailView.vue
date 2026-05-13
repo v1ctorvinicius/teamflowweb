@@ -1,16 +1,5 @@
 <template>
   <div class="detail-page">
-    <!-- Navbar -->
-    <!-- <header class="navbar">
-      <div class="navbar-inner">
-        <router-link to="/" class="back-link">
-          <i class="pi pi-arrow-left" /> Voltar
-        </router-link>
-        <div class="brand">⚽ TeamFlow</div>
-        <div class="spacer" />
-      </div>
-    </header> -->
-
     <main class="main">
       <div v-if="loading" class="loading-state">
         <ProgressSpinner strokeWidth="3" />
@@ -46,6 +35,18 @@
             <p class="season">Temporada {{ product.season }}</p>
           </div>
 
+          <div class="wishlist-row">
+            <button 
+              class="wishlist-btn" 
+              :class="{ 'is-wishlisted': isWishlisted }"
+              :disabled="wishlistLoading"
+              @click="toggleWishlist"
+            >
+              <i :class="isWishlisted ? 'pi pi-heart-fill' : 'pi pi-heart'" />
+              {{ isWishlisted ? 'Salvo' : 'Favoritar' }}
+            </button>
+          </div>
+
           <div class="price-section">
             <span class="label">Preço</span>
             <div class="price-wrapper">
@@ -61,7 +62,7 @@
               {{ product.enableCategoricalSizes ? product.categoricalSizesLabel : product.numericSizesLabel }}
             </label>
 
-            <!-- Sistema 1: Tamanhos categóricos (P, M, G) -->
+            <!-- Sistema de Tamanhos categóricos-->
             <div v-if="product.enableCategoricalSizes" class="size-selector">
               <button
                 v-for="size in product.stockCategorical"
@@ -75,7 +76,7 @@
               </button>
             </div>
 
-            <!-- Sistema 2: Tamanhos numéricos (34, 35, 36) -->
+            <!-- Sistema de Tamanhos numéricos -->
             <div v-else-if="product.enableNumericSizes" class="size-selector">
               <button
                 v-for="size in numericSizesArray"
@@ -89,13 +90,13 @@
               </button>
             </div>
 
-            <!-- Nenhum sistema ativado -->
+            <!-- Nenhum sistema de tamanho ativado -->
             <div v-else class="no-sizes">
               <p>Tamanhos não disponíveis</p>
             </div>
           </div>
 
-          <!-- 🔥 PERSONALIZAÇÃO: Nome + Número -->
+          <!--PERSONALIZAÇÃO-->
           <div class="customization-section">
             <label class="label">Personalização (opcional)</label>
             <div class="customization-grid">
@@ -163,8 +164,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'  // ← importar ambos
 import { productsService } from '@/services/products'
+import { userService } from '@/services/user'
+import { useAuthStore } from '@/stores/auth'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { Product } from '@/types'
 
@@ -172,16 +175,22 @@ const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598900000000'
 const CUSTOMIZATION_PRICE = 4990 // R$ 49,90 em centavos
 const APP_BASE_URL = import.meta.env.VITE_APP_URL || window.location.origin
 
-const route = useRoute()
+const route = useRoute()   // ← para pegar parâmetros da URL
+const router = useRouter() // ← para navegação
+const authStore = useAuthStore() // ← instância do store
+
 const product = ref<Product | null>(null)
 const loading = ref(true)
-
 const selectedImageIdx = ref(0)
 const selectedSize = ref<string>('')
 const shareToast = ref('')
 
 const customName = ref('')
 const customNumber = ref<number | null>(null)
+
+// Wishlist
+const isWishlisted = ref(false)
+const wishlistLoading = ref(false)
 
 const hasCustomization = computed(() => !!customName.value || !!customNumber.value)
 const finalPrice = computed(() => {
@@ -273,6 +282,39 @@ async function handleShare() {
   }
 }
 
+async function checkWishlistStatus() {
+  if (!authStore.isAuthenticated) return  // ← usar authStore
+  if (!product.value) return
+  try {
+    isWishlisted.value = await userService.isInWishlist(product.value.id)
+  } catch (error) {
+    console.error('Failed to check wishlist:', error)
+  }
+}
+
+async function toggleWishlist() {
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+    return
+  }
+  if (!product.value) return
+  
+  wishlistLoading.value = true
+  try {
+    if (isWishlisted.value) {
+      await userService.removeFromWishlist(product.value.id)
+      isWishlisted.value = false
+    } else {
+      await userService.addToWishlist(product.value.id)
+      isWishlisted.value = true
+    }
+  } catch (error) {
+    console.error('Failed to toggle wishlist:', error)
+  } finally {
+    wishlistLoading.value = false
+  }
+}
+
 onMounted(async () => {
   const id = route.params.id as string
   const slug = route.params.slug as string
@@ -298,6 +340,12 @@ onMounted(async () => {
 
     product.value = rawProduct
 
+    // 🔥 Verificar wishlist AFTER product está carregado
+    if (product.value && authStore.isAuthenticated) {
+      await checkWishlistStatus()
+    }
+
+    // Selecionar primeiro tamanho disponível
     if (product.value.enableCategoricalSizes && product.value.stockCategorical.length > 0) {
       const availableSize = product.value.stockCategorical.find(
         size => (product.value!.stockCategoricalBySize[size] ?? 0) > 0
@@ -468,6 +516,52 @@ onMounted(async () => {
 
 .share-toast { font-size: 11px; color: #3fb950; text-align: center; padding: 4px 0; }
 
+/* ── Wishlist ─────────────────────────────────────────────── */
+.wishlist-row {
+  margin-bottom: 4px;
+}
+
+.wishlist-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #2d3748;
+  border-radius: 10px;
+  color: #8b949e;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.wishlist-btn:hover {
+  border-color: #3d4f68;
+  color: #f0f6fc;
+}
+
+.wishlist-btn.is-wishlisted {
+  background: #2a0f0e;
+  border-color: #5a1a18;
+  color: #ffa19c;
+}
+
+.wishlist-btn.is-wishlisted:hover {
+  background: #3a1513;
+}
+
+.wishlist-btn i {
+  font-size: 16px;
+}
+
+.wishlist-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Not found ───────────────────────────────────────────── */
 .not-found { text-align: center; padding: 60px 20px; }
 .not-found p { font-size: 15px; color: #8b949e; margin-bottom: 20px; }
@@ -503,4 +597,5 @@ onMounted(async () => {
   .customization-grid { grid-template-columns: 1fr; }
   .price-section, .size-section, .customization-section, .description-section { padding: 12px; }
 }
+
 </style>
