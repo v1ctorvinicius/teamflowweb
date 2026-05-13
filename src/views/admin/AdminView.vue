@@ -1,32 +1,21 @@
 <template>
   <div class="admin-page">
-
-    <header class="navbar">
-      <div class="navbar-inner">
-        <div class="brand">
-          <span class="brand-icon">⚽</span>
-          <span class="brand-name">TeamFlow</span>
-          <span class="admin-badge">Admin</span>
+    <main class="main">
+      <div class="page-header">
+        <div class="header-left">
+          <h1 class="page-title">Produtos</h1>
+          <p class="page-sub">48 produtos cadastrados</p>
         </div>
-        <div class="nav-right">
-          <span class="user-name">{{ user?.name }}</span>
-          <router-link to="/" class="back-btn">
-            <i class="pi pi-arrow-left" /> Loja
-          </router-link>
-          <button class="logout-btn" @click="handleLogout">Sair</button>
-          <button class="create-btn secondary" @click="showCategoryModal = true">
-            <i class="pi pi-tag" /> Categorias
+        <div class="header-actions">
+          <button class="btn-secondary" @click="showCategoryModal = true">
+            <i class="ti ti-tag" aria-hidden="true" style="font-size:13px"></i>
+            Categorias
+          </button>
+          <button class="btn-primary" @click="openCreate">
+            <i class="ti ti-plus" aria-hidden="true" style="font-size:14px"></i>
+            Novo produto
           </button>
         </div>
-      </div>
-    </header>
-
-    <main class="main">
-      <div class="admin-header">
-        <h1 class="page-title">Painel de Produtos</h1>
-        <button class="new-btn" @click="openCreate">
-          <i class="pi pi-plus" /> Novo produto
-        </button>
       </div>
 
 
@@ -762,18 +751,23 @@ onMounted(async () => {
 
 /* ── Main ────────────────────────────────────────────────── */
 .main { max-width: 1400px; margin: 0 auto; padding: 24px 20px 48px; }
-.admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
-.page-title { font-size: 20px; font-weight: 700; color: #f0f6fc; margin: 0; }
 
-.new-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  height: 36px; padding: 0 16px;
-  background: #388bfd; border: none; color: #fff;
-  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: background .15s;
+/* Page header */
+.page-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:16px;margin-bottom:20px;flex-wrap:wrap;
 }
-.new-btn:hover { background: #1c7cef; }
+.header-left{}
+.page-title{font-size:20px;font-weight:700;color:var(--text-primary);margin:0 0 2px}
+.page-sub{font-size:12px;color:var(--text-muted)}
 
+.header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.btn-primary{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;background:var(--blue);border:none;color:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s}
+.btn-primary:hover{background:#1c7cef}
+
+.btn-secondary{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s}
+.btn-secondary:hover{border-color:var(--purple-border);color:var(--purple);background:var(--purple-bg)}
 /* ── Filtros ─────────────────────────────────────────────── */
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
 .search-wrap { position: relative; display: flex; align-items: center; flex: 1; min-width: 200px; max-width: 300px; }
