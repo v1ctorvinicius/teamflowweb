@@ -1,4 +1,3 @@
-<!-- src/components/ProductCard.vue -->
 <template>
   <div class="product-card" :class="{
     'is-favorite-team': isFavoriteTeam,
@@ -14,7 +13,8 @@
 
       <div v-if="isNew && !isOutOfStock" class="badge-new">🔥 Novo</div>
 
-      <div v-if="isOutOfStock" class="oos-overlay">
+      <!-- 🔥 Só mostra overlay se o produto TEM sistema de tamanhos E está esgotado -->
+      <div v-if="hasSizeSystem && isOutOfStock" class="oos-overlay">
         <span class="oos-label">ESGOTADO</span>
       </div>
     </div>
@@ -36,17 +36,21 @@
         </span>
       </div>
 
-
-
-      <div v-if="availableSizes.length" class="sizes-row">
-        <span v-for="size in availableSizes.slice(0, 6)" :key="size" class="size-chip" :class="{
-          'size-oos': isAuthenticated && getStockForSize(size) === 0,
-          'size-guest': !isAuthenticated,
-        }">{{ size }}</span>
-
+      <!-- 🔥 Seção de tamanhos - comportamento diferente para produtos sem sistema -->
+      <div v-if="hasSizeSystem">
+        <div v-if="availableSizes.length" class="sizes-row">
+          <span v-for="size in availableSizes.slice(0, 6)" :key="size" class="size-chip" :class="{
+            'size-oos': isAuthenticated && getStockForSize(size) === 0,
+            'size-guest': !isAuthenticated,
+          }">{{ size }}</span>
+        </div>
+        <div v-else class="sizes-row">
+          <span class="size-chip size-oos">Sem tamanhos</span>
+        </div>
       </div>
       <div v-else class="sizes-row">
-        <span class="size-chip size-oos">Sem tamanhos</span>
+        <!-- 🔥 Produtos sem sistema de tamanho (bolas, acessórios) mostram esta mensagem -->
+        <span class="size-chip size-universal">Tamanho único</span>
       </div>
 
       <div class="price-row">
@@ -99,11 +103,9 @@ const shareToast = ref('')
 const favoriteTeam = ref(props.userFavoriteTeam)
 watch(() => props.userFavoriteTeam, (v) => { favoriteTeam.value = v }, { immediate: true })
 
-
 const mainImage = computed(() =>
   props.product.imageUrls?.[0] || props.product.imageUrl
 )
-
 
 const availableSizes = computed<string[]>(() => {
   if (props.product.enableCategoricalSizes) {
@@ -114,11 +116,15 @@ const availableSizes = computed<string[]>(() => {
   return []
 })
 
+// 🔥 VERIFICA SE O PRODUTO TEM SISTEMA DE TAMANHOS HABILITADO
+const hasSizeSystem = computed(() =>
+  props.product.enableCategoricalSizes || props.product.enableNumericSizes
+)
+
 const isFavoriteTeam = computed(() => {
   if (!favoriteTeam.value) return false
-  return props.product.club.toLowerCase().trim() === favoriteTeam.value.toLowerCase().trim()
+  return props.product.club?.toLowerCase().trim() === favoriteTeam.value.toLowerCase().trim()
 })
-
 
 function getStockForSize(size: string): number {
   if (props.product.enableCategoricalSizes) {
@@ -129,8 +135,15 @@ function getStockForSize(size: string): number {
   return 0
 }
 
+// 🔥 CORREÇÃO: Produto sem sistema de tamanho NUNCA está esgotado
 const isOutOfStock = computed(() => {
+  // Se não tem sistema de tamanho, produto está disponível (ex: bola, acessório)
+  if (!hasSizeSystem.value) return false
+
+  // Se tem sistema mas não tem tamanhos definidos, esgotado
   if (!availableSizes.value.length) return true
+
+  // Se tem tamanhos, verifica se todos têm estoque zero
   return availableSizes.value.every((s) => getStockForSize(s) === 0)
 })
 
@@ -150,7 +163,7 @@ const whatsappUrl = computed(() => {
   const msg = encodeURIComponent(
     `Olá! Tenho interesse no produto:\n\n` +
     `*${props.product.name}*\n` +
-    `Time: ${props.product.club} | Temporada: ${props.product.season}\n` +
+    `${props.product.club ? `Time: ${props.product.club} | ` : ''}Temporada: ${props.product.season}\n` +
     `Preço: ${formatPrice(props.product.basePrice)}\n\n` +
     `Poderia me dar mais informações?`
   )
@@ -168,7 +181,7 @@ async function handleShare() {
     try {
       await navigator.share({
         title: props.product.name,
-        text: `${props.product.name} — ${props.product.club} | ${formatPrice(props.product.basePrice)}`,
+        text: `${props.product.name} — ${props.product.club || 'Produto'} | ${formatPrice(props.product.basePrice)}`,
         url: shareUrl.value,
       })
     } catch { /* usuário cancelou */ }
@@ -183,6 +196,7 @@ async function handleShare() {
   }
 }
 </script>
+
 <style scoped>
 /* ── Raiz ─────────────────────────────────────────────────── */
 .product-card {
@@ -387,8 +401,6 @@ async function handleShare() {
 .season-label {
   display: none;
 }
-
-/* já vem no badge */
 
 /* ── Preço ────────────────────────────────────────────────── */
 .price-row {

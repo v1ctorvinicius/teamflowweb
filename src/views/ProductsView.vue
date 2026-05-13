@@ -1,7 +1,6 @@
 <template>
   <div class="page">
 
-
     <div v-if="!isAuthenticated" class="guest-banner">
       <span class="guest-banner-text">🎽 Crie uma conta grátis para ver estoque por tamanho, filtrar pelo seu time e
         muito mais</span>
@@ -22,7 +21,6 @@
         </div>
         <div class="section-divider" />
       </section>
-
 
       <div class="toolbar">
         <div class="toolbar-left">
@@ -54,31 +52,77 @@
         </div>
       </div>
 
-      <div v-if="loading" class="loading-state">
-        <ProgressSpinner strokeWidth="3" />
-        <p>Carregando camisetas...</p>
+      <!-- Toggle de visualização -->
+      <div class="view-toggle">
+        <button class="type-chip" :class="{ active: viewMode === 'sections' }" @click="viewMode = 'sections'">
+          Por categoria
+        </button>
+        <button class="type-chip" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">
+          Todos os produtos
+        </button>
       </div>
 
-      <div v-else-if="products.length" class="products-grid">
-        <ProductCard v-for="product in products" :key="product.id" :product="product"
-          :user-favorite-team="user?.favoriteTeam" :is-authenticated="isAuthenticated"
-          @view-details="handleViewDetails" />
-      </div>
+      <!-- MODO SEÇÕES -->
+      <template v-if="viewMode === 'sections' && !clubFilter && !typeFilter && !myTeamFilter">
+        <template v-for="cat in categories" :key="cat.slug">
+          <section v-if="productsByCategory[cat.slug]?.length" class="category-section">
+            <div class="section-header">
+              <h2 class="section-title">{{ cat.icon }} {{ cat.label }}</h2>
+              <button class="see-all-btn"
+                @click="viewMode = 'list'; typeFilter = undefined; clubFilter = ''; fetchProducts(1, true)">
+                Ver todos →
+              </button>
+            </div>
 
-      <div v-else class="empty-state">
-        <span class="empty-icon">👕</span>
-        <p class="empty-title">Nenhuma camiseta encontrada</p>
-        <p class="empty-sub">Tente ajustar os filtros</p>
-        <button class="reset-btn" @click="resetFilters">Limpar filtros</button>
-      </div>
+            <div class="products-grid">
+              <ProductCard v-for="product in productsByCategory[cat.slug]" :key="product.id" :product="product"
+                :user-favorite-team="user?.favoriteTeam" :is-authenticated="isAuthenticated"
+                @view-details="handleViewDetails" />
+            </div>
 
-      <div v-if="!loading && pagination.totalPages > 1" class="pagination">
-        <button class="page-btn" :disabled="pagination.page <= 1" @click="fetchProducts(pagination.page - 1, true)"><i
-            class="pi pi-chevron-left" /> Anterior</button>
-        <span class="page-info">Página {{ pagination.page }} de {{ pagination.totalPages }}</span>
-        <button class="page-btn" :disabled="pagination.page >= pagination.totalPages"
-          @click="fetchProducts(pagination.page + 1, true)">Próxima <i class="pi pi-chevron-right" /></button>
-      </div>
+            <div class="section-divider" />
+          </section>
+        </template>
+
+        <!-- Se não tiver produtos em nenhuma categoria -->
+        <div v-if="!Object.keys(productsByCategory).length" class="empty-state">
+          <span class="empty-icon">👕</span>
+          <p class="empty-title">Nenhum produto cadastrado ainda</p>
+        </div>
+      </template>
+
+      <!-- MODO LISTA (filtros ativos ou toggle "Todos") -->
+      <template v-else>
+        <div v-if="loading" class="loading-state">
+          <ProgressSpinner strokeWidth="3" />
+          <p>Carregando produtos...</p>
+        </div>
+
+        <div v-else-if="products.length" class="products-grid">
+          <ProductCard v-for="product in products" :key="product.id" :product="product"
+            :user-favorite-team="user?.favoriteTeam" :is-authenticated="isAuthenticated"
+            @view-details="handleViewDetails" />
+        </div>
+
+        <div v-else class="empty-state">
+          <span class="empty-icon">👕</span>
+          <p class="empty-title">Nenhum produto encontrado</p>
+          <p class="empty-sub">Tente ajustar os filtros</p>
+          <button class="reset-btn" @click="resetFilters">Limpar filtros</button>
+        </div>
+
+        <div v-if="!loading && pagination.totalPages > 1" class="pagination">
+          <button class="page-btn" :disabled="pagination.page <= 1" @click="fetchProducts(pagination.page - 1, true)">
+            <i class="pi pi-chevron-left" /> Anterior
+          </button>
+          <span class="page-info">Página {{ pagination.page }} de {{ pagination.totalPages }}</span>
+          <button class="page-btn" :disabled="pagination.page >= pagination.totalPages"
+            @click="fetchProducts(pagination.page + 1, true)">
+            Próxima <i class="pi pi-chevron-right" />
+          </button>
+        </div>
+      </template>
+
     </main>
   </div>
 </template>
@@ -92,6 +136,8 @@ import { productsService } from '@/services/products'
 import ProgressSpinner from 'primevue/progressspinner'
 import ProductCard from '@/components/ProductCard.vue'
 import type { Product } from '@/types'
+import type { ProductCategoryDef } from '@/types'
+
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -106,6 +152,10 @@ const clubFilter = ref('')
 const typeFilter = ref<'PLAYER' | 'FAN' | undefined>(undefined)
 const myTeamFilter = ref(false)
 const myTeamCount = ref(0)
+
+const categories = ref<ProductCategoryDef[]>([])
+const productsByCategory = ref<Record<string, Product[]>>({})
+const viewMode = ref<'sections' | 'list'>('sections')
 
 const typeOptions = [
   { label: 'Todos', value: undefined },
@@ -171,11 +221,35 @@ watch(user, (n, o) => {
   if (n?.favoriteTeam !== o?.favoriteTeam) { products.value = [...products.value]; fetchMyTeamCount() }
 })
 
+async function loadCategorySections() {
+  try {
+    const cats = await productsService.getCategories()
+    categories.value = cats
+
+    const results = await Promise.all(
+      cats.map(cat =>
+        productsService.getByCategory(cat.slug, 8)
+          .then(products => ({ slug: cat.slug, products }))
+          .catch(() => ({ slug: cat.slug, products: [] }))
+      )
+    )
+
+    const byCategory: Record<string, Product[]> = {}
+    results.forEach(({ slug, products }) => {
+      if (products.length > 0) byCategory[slug] = products
+    })
+    productsByCategory.value = byCategory
+  } catch (error) {
+    console.error('Failed to load categories:', error)
+  }
+}
+
 onMounted(async () => {
   await Promise.all([
     fetchProducts(1, true),
     productsService.getFeatured().then((f) => { featured.value = f }).catch(() => { }),
     fetchMyTeamCount(),
+    loadCategorySections(),
   ])
 })
 
@@ -894,6 +968,36 @@ body {
   color: var(--text-muted);
   min-width: 80px;
   text-align: center
+}
+
+.category-section {
+  margin-bottom: 8px;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.see-all-btn {
+  font-size: 12px;
+  color: #60a5fa;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.see-all-btn:hover {
+  color: #93c5fd;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 /* ── Responsive ─────────────────────────────────────────── */
