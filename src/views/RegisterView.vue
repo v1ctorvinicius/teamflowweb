@@ -1,7 +1,6 @@
-<!-- src/views/RegisterView.vue -->
 <template>
   <div class="auth-page">
-    <!-- Painel esquerdo decorativo -->
+
     <div class="auth-side">
       <div class="side-content">
         <div class="side-logo">⚽</div>
@@ -15,7 +14,7 @@
       </div>
     </div>
 
-    <!-- Formulário -->
+
     <div class="auth-main">
       <div class="auth-card">
         <div class="auth-header">
@@ -28,13 +27,8 @@
             <label class="form-label">Nome</label>
             <div class="input-wrap">
               <i class="pi pi-user input-icon" />
-              <input
-                v-model="name"
-                type="text"
-                class="form-input"
-                :class="{ 'input-error': errors.name }"
-                placeholder="Seu nome"
-              />
+              <input v-model="name" type="text" class="form-input" :class="{ 'input-error': errors.name }"
+                placeholder="Seu nome" />
             </div>
             <span v-if="errors.name" class="field-error">{{ errors.name }}</span>
           </div>
@@ -43,13 +37,8 @@
             <label class="form-label">Email</label>
             <div class="input-wrap">
               <i class="pi pi-envelope input-icon" />
-              <input
-                v-model="email"
-                type="email"
-                class="form-input"
-                :class="{ 'input-error': errors.email }"
-                placeholder="seu@email.com"
-              />
+              <input v-model="email" type="email" class="form-input" :class="{ 'input-error': errors.email }"
+                placeholder="seu@email.com" />
             </div>
             <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
           </div>
@@ -58,26 +47,17 @@
             <label class="form-label">Senha</label>
             <div class="input-wrap">
               <i class="pi pi-lock input-icon" />
-              <input
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                class="form-input"
-                :class="{ 'input-error': errors.password }"
-                placeholder="Mínimo 8 caracteres"
-              />
-              <button
-                type="button"
-                class="toggle-pass"
-                @click="showPassword = !showPassword"
-                :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
-              >
+              <input v-model="password" :type="showPassword ? 'text' : 'password'" class="form-input"
+                :class="{ 'input-error': errors.password }" placeholder="Mínimo 8 caracteres" />
+              <button type="button" class="toggle-pass" @click="showPassword = !showPassword"
+                :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
                 <i :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" />
               </button>
             </div>
             <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
           </div>
 
-          <!-- Time do coração: select em vez de input livre -->
+
           <div class="form-group">
             <label class="form-label">
               Time do Coração
@@ -86,36 +66,19 @@
             <div class="input-wrap select-wrap">
               <i class="pi pi-heart input-icon input-icon-heart" />
 
-              <!-- Estado de carregamento -->
-              <select
-                v-if="clubsLoading"
-                class="form-input form-select"
-                disabled
-              >
+
+              <select v-if="clubsLoading" class="form-input form-select" disabled>
                 <option>Carregando times…</option>
               </select>
 
-              <!-- Erro ao carregar times (fallback gracioso) -->
-              <input
-                v-else-if="clubsError"
-                v-model="favoriteTeam"
-                type="text"
-                class="form-input"
-                placeholder="Ex: Flamengo, São Paulo…"
-              />
 
-              <!-- Select normal -->
-              <select
-                v-else
-                v-model="favoriteTeam"
-                class="form-input form-select"
-              >
+              <input v-else-if="clubsError" v-model="favoriteTeam" type="text" class="form-input"
+                placeholder="Ex: Flamengo, São Paulo…" />
+
+
+              <select v-else v-model="favoriteTeam" class="form-input form-select">
                 <option value="">— Selecione seu time —</option>
-                <option
-                  v-for="club in clubs"
-                  :key="club.id"
-                  :value="club.name"
-                >
+                <option v-for="club in clubs" :key="club.id" :value="club.name">
                   {{ club.name }}
                 </option>
               </select>
@@ -135,11 +98,7 @@
             {{ serverError }}
           </div>
 
-          <button
-            class="submit-btn"
-            :disabled="loading"
-            @click="handleRegister"
-          >
+          <button class="submit-btn" :disabled="loading" @click="handleRegister">
             <span v-if="!loading">Criar Conta</span>
             <span v-else class="btn-spinner" />
           </button>
@@ -172,7 +131,6 @@ const showPassword = ref(false)
 const errors = ref<Record<string, string>>({})
 const serverError = ref('')
 
-// Estado dos times
 const clubs = ref<Club[]>([])
 const clubsLoading = ref(true)
 const clubsError = ref(false)
@@ -227,7 +185,13 @@ const handleRegister = async () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 .auth-page {
   display: flex;
@@ -270,7 +234,11 @@ const handleRegister = async () => {
 }
 
 @media (min-width: 900px) {
-  .auth-side { display: flex; align-items: center; justify-content: center; }
+  .auth-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .side-content {
@@ -420,7 +388,8 @@ const handleRegister = async () => {
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
-  padding-right: 36px; /* espaço para o chevron */
+  padding-right: 36px;
+  /* espaço para o chevron */
 }
 
 .form-select option {
@@ -535,7 +504,9 @@ const handleRegister = async () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .auth-footer {

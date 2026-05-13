@@ -15,7 +15,6 @@
         Seu time
       </span>
 
-      <!-- Desktop links -->
       <nav class="nav-links" aria-label="Navegação principal">
         <template v-if="isAuthenticated">
           <router-link v-if="isAdmin" to="/admin" class="admin-lnk">
@@ -38,26 +37,14 @@
         </template>
       </nav>
 
-      <!-- Hamburguer -->
-      <button 
-        class="hamburger" 
-        :class="{ open: drawerOpen }"
-        @click="toggleDrawer"
-        :aria-expanded="drawerOpen"
-        aria-label="Abrir menu"
-      >
+      <button class="hamburger" :class="{ open: drawerOpen }" @click="toggleDrawer" :aria-expanded="drawerOpen"
+        aria-label="Abrir menu">
         <span></span><span></span><span></span>
       </button>
     </div>
 
-    <!-- Overlay -->
-    <div 
-      class="drawer-overlay" 
-      :class="{ open: drawerOpen }"
-      @click="drawerOpen = false"
-    ></div>
+    <div class="drawer-overlay" :class="{ open: drawerOpen }" @click="drawerOpen = false"></div>
 
-    <!-- Drawer -->
     <nav class="drawer" :class="{ open: drawerOpen }" aria-label="Menu mobile">
       <div class="drawer-user">
         <div class="drawer-avatar">
@@ -450,9 +437,11 @@ async function handleDrawerLogout() {
   .hamburger {
     display: none;
   }
+
   .nav-links {
     display: flex;
   }
+
   .team-pill {
     max-width: none;
   }

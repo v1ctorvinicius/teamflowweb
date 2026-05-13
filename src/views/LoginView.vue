@@ -1,7 +1,6 @@
-<!-- src/views/LoginView.vue -->
 <template>
   <div class="auth-page">
-    <!-- Painel esquerdo decorativo -->
+
     <div class="auth-side">
       <div class="side-content">
         <div class="side-logo">⚽</div>
@@ -15,7 +14,7 @@
       </div>
     </div>
 
-    <!-- Formulário -->
+
     <div class="auth-main">
       <div class="auth-card">
         <div class="auth-header">
@@ -28,13 +27,8 @@
             <label class="form-label">Email</label>
             <div class="input-wrap">
               <i class="pi pi-envelope input-icon" />
-              <input
-                v-model="email"
-                type="email"
-                class="form-input"
-                placeholder="seu@email.com"
-                @keyup.enter="handleLogin"
-              />
+              <input v-model="email" type="email" class="form-input" placeholder="seu@email.com"
+                @keyup.enter="handleLogin" />
             </div>
           </div>
 
@@ -42,19 +36,10 @@
             <label class="form-label">Senha</label>
             <div class="input-wrap">
               <i class="pi pi-lock input-icon" />
-              <input
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                class="form-input"
-                placeholder="••••••••"
-                @keyup.enter="handleLogin"
-              />
-              <button
-                type="button"
-                class="toggle-pass"
-                @click="showPassword = !showPassword"
-                :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
-              >
+              <input v-model="password" :type="showPassword ? 'text' : 'password'" class="form-input"
+                placeholder="••••••••" @keyup.enter="handleLogin" />
+              <button type="button" class="toggle-pass" @click="showPassword = !showPassword"
+                :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
                 <i :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" />
               </button>
             </div>
@@ -65,12 +50,7 @@
             {{ errorMsg }}
           </div>
 
-          <button
-            class="submit-btn"
-            :class="{ loading }"
-            :disabled="loading"
-            @click="handleLogin"
-          >
+          <button class="submit-btn" :class="{ loading }" :disabled="loading" @click="handleLogin">
             <span v-if="!loading">Entrar</span>
             <span v-else class="btn-spinner" />
           </button>
@@ -120,7 +100,13 @@ const handleLogin = async () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 .auth-page {
   display: flex;
@@ -163,7 +149,11 @@ const handleLogin = async () => {
 }
 
 @media (min-width: 900px) {
-  .auth-side { display: flex; align-items: center; justify-content: center; }
+  .auth-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .side-content {
@@ -359,14 +349,16 @@ const handleLogin = async () => {
 .btn-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .auth-footer {

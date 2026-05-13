@@ -1,4 +1,3 @@
-<!-- src/components/ImageUploader.vue -->
 <template>
   <div class="image-uploader">
     <div class="uploader-header">
@@ -6,30 +5,17 @@
       <span class="count">{{ localImageUrls.length }}/10</span>
     </div>
 
-    <!-- Dropzone -->
-    <div
-      class="dropzone"
-      :class="{ 'is-dragging': isDragging, 'is-disabled': localImageUrls.length >= 10 }"
-      @dragover.prevent="isDragging = true"
-      @dragleave.prevent="isDragging = false"
-      @drop.prevent="handleDrop"
-      @click="triggerFileInput"
-    >
+    <div class="dropzone" :class="{ 'is-dragging': isDragging, 'is-disabled': localImageUrls.length >= 10 }"
+      @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop"
+      @click="triggerFileInput">
       <i class="pi pi-cloud-upload" />
       <p class="dropzone-text">Solte imagens aqui ou clique</p>
       <p class="dropzone-sub">Máximo 5MB por imagem</p>
-      <input
-        ref="fileInput"
-        type="file"
-        multiple
-        accept="image/*"
-        class="file-input"
-        :disabled="localImageUrls.length >= 10"
-        @change="handleFileSelect"
-      />
+      <input ref="fileInput" type="file" multiple accept="image/*" class="file-input"
+        :disabled="localImageUrls.length >= 10" @change="handleFileSelect" />
     </div>
 
-    <!-- Upload status -->
+
     <div v-if="uploading.length > 0" class="upload-status">
       <div v-for="(item, idx) in uploading" :key="`uploading-${idx}`" class="upload-item">
         <span class="filename">{{ item.file.name }}</span>
@@ -40,24 +26,17 @@
       </div>
     </div>
 
-    <!-- Error message -->
+
     <div v-if="uploadError" class="error-alert">
       <i class="pi pi-exclamation-circle" />
       {{ uploadError }}
     </div>
 
-    <!-- Gallery de imagens (já salvas + pendentes) -->
+
     <div class="gallery">
-      <div
-        v-for="(img, idx) in allDisplayImages"
-        :key="img.isPending ? `pending-${idx}` : img.url"
-        class="gallery-item"
-        draggable="true"
-        @dragstart="onDragStart($event, idx)"
-        @dragend="onDragEnd"
-        @dragover.prevent
-        @drop="onDrop($event, idx)"
-      >
+      <div v-for="(img, idx) in allDisplayImages" :key="img.isPending ? `pending-${idx}` : img.url" class="gallery-item"
+        draggable="true" @dragstart="onDragStart($event, idx)" @dragend="onDragEnd" @dragover.prevent
+        @drop="onDrop($event, idx)">
         <div class="image-container">
           <img :src="img.url" :alt="`Imagem ${idx + 1}`" />
           <div v-if="img.isPending && img.progress < 100" class="upload-overlay">
@@ -75,12 +54,12 @@
       </div>
     </div>
 
-    <!-- Upload status (opcional, pode remover se não quiser) -->
+
     <div v-if="uploading.length > 0 && false" class="upload-status">
-      <!-- Escondido, pois já mostramos na galeria -->
+
     </div>
 
-    <!-- Empty state -->
+
     <div v-else class="empty-state">
       <p>Nenhuma imagem subida</p>
     </div>
@@ -102,7 +81,7 @@ const emit = defineEmits<{
 
 const fileInput = ref<HTMLInputElement>()
 const isDragging = ref(false)
-const uploading = ref<{ file: File; progress: number; previewUrl: string }[]>([])  // 🔥 previewUrl adicionado
+const uploading = ref<{ file: File; progress: number; previewUrl: string }[]>([])
 const uploadError = ref('')
 const draggedIdx = ref<number | null>(null)
 
@@ -132,13 +111,13 @@ async function handleDrop(event: DragEvent) {
   }
 }
 
-// 🔥 Função para adicionar arquivos à fila (sem upload)
+
 async function addFilesToQueue(files: File[]) {
   uploadError.value = ''
 
   const currentTotal = localImageUrls.value.length + uploading.value.length
   const canUpload = 10 - currentTotal
-  
+
   if (files.length > canUpload) {
     uploadError.value = `Você pode adicionar no máximo ${canUpload} imagem(s) mais`
     return
@@ -150,14 +129,14 @@ async function addFilesToQueue(files: File[]) {
     return
   }
 
-  // 🔥 Adiciona à fila com preview local
+
   for (const file of imageFiles) {
-    const previewUrl = URL.createObjectURL(file)  // Cria preview local
+    const previewUrl = URL.createObjectURL(file)
     uploading.value.push({ file, progress: 0, previewUrl })
   }
 }
 
-// 🔥 Preview das imagens na fila (antes do upload)
+
 const queueImages = computed(() => {
   return uploading.value.map(item => ({
     url: item.previewUrl,
@@ -167,7 +146,7 @@ const queueImages = computed(() => {
   }))
 })
 
-// 🔥 Todas as imagens para exibição (já salvas + pendentes)
+
 const allDisplayImages = computed(() => {
   const saved = localImageUrls.value.map(url => ({ url, progress: 100, isPending: false }))
   const pending = queueImages.value
@@ -177,7 +156,7 @@ const allDisplayImages = computed(() => {
 async function savePendingUploads() {
   uploadError.value = ''
   const pendingItems = [...uploading.value]
-  
+
   if (pendingItems.length === 0) return true
 
   for (let i = 0; i < pendingItems.length; i++) {
@@ -200,9 +179,9 @@ async function savePendingUploads() {
       emit('uploaded', [response.secure_url])
       localImageUrls.value = [...localImageUrls.value, response.secure_url]
 
-      // Limpa preview local
+
       URL.revokeObjectURL(uploadItem.previewUrl)
-      
+
       setTimeout(() => {
         uploading.value = uploading.value.filter((u) => u.file !== item.file)
       }, 500)
@@ -215,7 +194,7 @@ async function savePendingUploads() {
 }
 
 function removeImage(idx: number) {
-  // Verifica se é imagem já salva ou pendente
+
   const savedCount = localImageUrls.value.length
   if (idx < savedCount) {
     localImageUrls.value = localImageUrls.value.filter((_, i) => i !== idx)
@@ -236,15 +215,15 @@ function handleReorder(targetIdx: number) {
   const fromIdx = draggedIdx.value
   const toIdx = targetIdx
 
-  // Caso 1: Movendo entre imagens salvas (já no servidor)
+
   if (fromIdx < savedCount && toIdx < savedCount) {
     const newUrls = [...localImageUrls.value]
     const [draggedItem] = newUrls.splice(fromIdx, 1)
     newUrls.splice(toIdx, 0, draggedItem)
     localImageUrls.value = newUrls
   }
-  
-  // Caso 2: Movendo entre imagens pendentes (upload ainda não feito)
+
+
   else if (fromIdx >= savedCount && toIdx >= savedCount) {
     const pendingIdx = fromIdx - savedCount
     const targetPendingIdx = toIdx - savedCount
@@ -253,29 +232,29 @@ function handleReorder(targetIdx: number) {
     newPending.splice(targetPendingIdx, 0, draggedItem)
     uploading.value = newPending
   }
-  
-  // 🔥 Caso 3: Movendo de imagem salva para posição pendente (ou vice-versa)
+
+
   else {
-    // Converte tudo para um array unificado, reordena, e depois separa novamente
-    
-    // Cria array unificado de todas as imagens (salvas + pendentes)
+
+
+
     const allSaved = localImageUrls.value.map(url => ({ type: 'saved', url }))
-    const allPending = uploading.value.map(item => ({ 
-      type: 'pending', 
-      file: item.file, 
-      progress: item.progress, 
-      previewUrl: item.previewUrl 
+    const allPending = uploading.value.map(item => ({
+      type: 'pending',
+      file: item.file,
+      progress: item.progress,
+      previewUrl: item.previewUrl
     }))
     const unified = [...allSaved, ...allPending]
-    
-    // Reordena
+
+
     const [draggedItem] = unified.splice(fromIdx, 1)
     unified.splice(toIdx, 0, draggedItem)
-    
-    // Separa novamente
+
+
     const newSaved: string[] = []
     const newPending: { file: File; progress: number; previewUrl: string }[] = []
-    
+
     for (const item of unified) {
       if (item.type === 'saved') {
         newSaved.push(item.url)
@@ -287,7 +266,7 @@ function handleReorder(targetIdx: number) {
         })
       }
     }
-    
+
     localImageUrls.value = newSaved
     uploading.value = newPending
   }
@@ -304,7 +283,7 @@ function triggerFileInput() {
   fileInput.value?.click()
 }
 
-// Variável para armazenar o índice do item sendo arrastado
+
 const dragStartIndex = ref<number | null>(null)
 
 function onDragStart(event: DragEvent, index: number) {
@@ -313,7 +292,7 @@ function onDragStart(event: DragEvent, index: number) {
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('text/plain', index.toString())
   }
-  // 🔥 Isso evita que a imagem padrão do navegador apareça
+
   if (event.target instanceof HTMLElement) {
     event.target.style.opacity = '0.5'
   }
@@ -328,7 +307,7 @@ function onDragEnd(event: DragEvent) {
 
 async function onDrop(event: DragEvent, targetIndex: number) {
   event.preventDefault()
-  
+
   if (dragStartIndex.value === null || dragStartIndex.value === targetIndex) {
     return
   }
@@ -337,15 +316,15 @@ async function onDrop(event: DragEvent, targetIndex: number) {
   const toIdx = targetIndex
   const savedCount = localImageUrls.value.length
 
-  // Caso 1: Movendo entre imagens salvas (já no servidor)
+
   if (fromIdx < savedCount && toIdx < savedCount) {
     const newUrls = [...localImageUrls.value]
     const [draggedItem] = newUrls.splice(fromIdx, 1)
     newUrls.splice(toIdx, 0, draggedItem)
     localImageUrls.value = newUrls
   }
-  
-  // Caso 2: Movendo entre imagens pendentes (upload ainda não feito)
+
+
   else if (fromIdx >= savedCount && toIdx >= savedCount) {
     const pendingIdx = fromIdx - savedCount
     const targetPendingIdx = toIdx - savedCount
@@ -354,27 +333,27 @@ async function onDrop(event: DragEvent, targetIndex: number) {
     newPending.splice(targetPendingIdx, 0, draggedItem)
     uploading.value = newPending
   }
-  
-  // Caso 3: Movendo entre tipos diferentes
+
+
   else {
-    // Cria array unificado de todas as imagens
+
     const allSaved = localImageUrls.value.map(url => ({ type: 'saved', url }))
-    const allPending = uploading.value.map(item => ({ 
-      type: 'pending', 
-      file: item.file, 
-      progress: item.progress, 
-      previewUrl: item.previewUrl 
+    const allPending = uploading.value.map(item => ({
+      type: 'pending',
+      file: item.file,
+      progress: item.progress,
+      previewUrl: item.previewUrl
     }))
     const unified = [...allSaved, ...allPending]
-    
-    // Reordena
+
+
     const [draggedItem] = unified.splice(fromIdx, 1)
     unified.splice(toIdx, 0, draggedItem)
-    
-    // Separa novamente
+
+
     const newSaved: string[] = []
     const newPending: { file: File; progress: number; previewUrl: string }[] = []
-    
+
     for (const item of unified) {
       if (item.type === 'saved') {
         newSaved.push(item.url)
@@ -386,7 +365,7 @@ async function onDrop(event: DragEvent, targetIndex: number) {
         })
       }
     }
-    
+
     localImageUrls.value = newSaved
     uploading.value = newPending
   }
@@ -564,6 +543,7 @@ async function onDrop(event: DragEvent, targetIndex: number) {
 .gallery-item:active {
   cursor: grabbing;
 }
+
 .gallery-item.drag-over {
   transform: scale(1.02);
 }
@@ -684,38 +664,38 @@ async function onDrop(event: DragEvent, targetIndex: number) {
   .gallery-item {
     width: 55px;
   }
-  
+
   .image-container {
     width: 55px;
     height: 55px;
   }
-  
+
   .dropzone {
     padding: 16px;
   }
-  
+
   .dropzone i {
     font-size: 24px;
   }
-  
+
   .dropzone-text {
     font-size: 12px;
   }
-  
+
   .upload-item {
     flex-wrap: wrap;
   }
-  
+
   .filename {
     max-width: 100%;
     flex: 1;
   }
-  
+
   .progress {
     min-width: 100%;
     order: 1;
   }
-  
+
   .percent {
     order: 2;
   }

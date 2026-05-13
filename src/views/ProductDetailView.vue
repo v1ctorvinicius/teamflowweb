@@ -6,28 +6,23 @@
       </div>
 
       <div v-else-if="product" class="content-grid">
-        <!-- Galeria de imagens -->
+
         <div class="gallery-section">
           <div class="main-image">
             <img :src="selectedImageUrl" :alt="product.name" />
             <div v-if="product.isFeatured" class="badge-featured">⭐ Destaque</div>
           </div>
 
-          <!-- Thumbnails -->
+
           <div v-if="product.imageUrls.length > 1" class="thumbnails">
-            <button
-              v-for="(url, idx) in product.imageUrls"
-              :key="idx"
-              class="thumbnail"
-              :class="{ active: selectedImageIdx === idx }"
-              @click="selectedImageIdx = idx"
-            >
+            <button v-for="(url, idx) in product.imageUrls" :key="idx" class="thumbnail"
+              :class="{ active: selectedImageIdx === idx }" @click="selectedImageIdx = idx">
               <img :src="url" :alt="`Imagem ${idx + 1}`" />
             </button>
           </div>
         </div>
 
-        <!-- Informações do produto -->
+
         <div class="info-section">
           <div class="header">
             <h1 class="name">{{ product.name }}</h1>
@@ -36,12 +31,8 @@
           </div>
 
           <div class="wishlist-row">
-            <button 
-              class="wishlist-btn" 
-              :class="{ 'is-wishlisted': isWishlisted }"
-              :disabled="wishlistLoading"
-              @click="toggleWishlist"
-            >
+            <button class="wishlist-btn" :class="{ 'is-wishlisted': isWishlisted }" :disabled="wishlistLoading"
+              @click="toggleWishlist">
               <i :class="isWishlisted ? 'pi pi-heart-fill' : 'pi pi-heart'" />
               {{ isWishlisted ? 'Salvo' : 'Favoritar' }}
             </button>
@@ -56,95 +47,74 @@
             <span v-if="hasCustomization" class="customization-price">+ R$ 49,90 (personalização)</span>
           </div>
 
-          <!-- Seletor de tamanho dinâmico -->
+
           <div class="size-section">
             <label class="label">
               {{ product.enableCategoricalSizes ? product.categoricalSizesLabel : product.numericSizesLabel }}
             </label>
 
-            <!-- Sistema de Tamanhos categóricos-->
+
             <div v-if="product.enableCategoricalSizes" class="size-selector">
-              <button
-                v-for="size in product.stockCategorical"
-                :key="size"
-                class="size-btn"
-                :class="{ active: selectedSize === size }"
-                :disabled="(product.stockCategoricalBySize[size] ?? 0) === 0"
-                @click="selectedSize = size"
-              >
+              <button v-for="size in product.stockCategorical" :key="size" class="size-btn"
+                :class="{ active: selectedSize === size }" :disabled="(product.stockCategoricalBySize[size] ?? 0) === 0"
+                @click="selectedSize = size">
                 {{ size }}
               </button>
             </div>
 
-            <!-- Sistema de Tamanhos numéricos -->
+
             <div v-else-if="product.enableNumericSizes" class="size-selector">
-              <button
-                v-for="size in numericSizesArray"
-                :key="size"
-                class="size-btn"
-                :class="{ active: selectedSize === size }"
-                :disabled="(product.stockNumeric[size] ?? 0) === 0"
-                @click="selectedSize = size"
-              >
+              <button v-for="size in numericSizesArray" :key="size" class="size-btn"
+                :class="{ active: selectedSize === size }" :disabled="(product.stockNumeric[size] ?? 0) === 0"
+                @click="selectedSize = size">
                 {{ size }}
               </button>
             </div>
 
-            <!-- Nenhum sistema de tamanho ativado -->
+
             <div v-else class="no-sizes">
               <p>Tamanhos não disponíveis</p>
             </div>
           </div>
 
-          <!--PERSONALIZAÇÃO-->
+
           <div class="customization-section">
             <label class="label">Personalização (opcional)</label>
             <div class="customization-grid">
               <div class="custom-field">
-                <input
-                  v-model="customName"
-                  type="text"
-                  class="custom-input"
-                  placeholder="Nome (ex: FULANO)"
-                  maxlength="12"
-                />
+                <input v-model="customName" type="text" class="custom-input" placeholder="Nome (ex: FULANO)"
+                  maxlength="12" />
                 <span class="field-hint">Máx. 12 caracteres</span>
               </div>
               <div class="custom-field">
-                <input
-                  v-model="customNumber"
-                  type="number"
-                  class="custom-input"
-                  placeholder="Número (ex: 10)"
-                  min="0"
-                  max="99"
-                />
+                <input v-model="customNumber" type="number" class="custom-input" placeholder="Número (ex: 10)" min="0"
+                  max="99" />
                 <span class="field-hint">Número de 0 a 99</span>
               </div>
             </div>
             <div v-if="hasCustomization" class="customization-preview">
               <span class="preview-badge">
-                {{ customName ? customName : 'NOME' }} 
+                {{ customName ? customName : 'NOME' }}
                 {{ customNumber ? `#${customNumber}` : '#00' }}
               </span>
               <span class="preview-info">+ R$ 49,90</span>
             </div>
           </div>
 
-          <!-- Descrição -->
+
           <div v-if="product.description" class="description-section">
             <label class="label">Descrição</label>
             <p class="description">{{ product.description }}</p>
           </div>
 
-          <!-- Botão WhatsApp -->
+
           <div class="actions">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer" class="whatsapp-btn-lg">
               <i class="pi pi-send" />
               Comprar via WhatsApp
             </a>
 
-            <!-- Compartilhar -->
+
             <button class="share-btn" @click="handleShare">
               <i class="pi pi-share-alt" />
               Compartilhar
@@ -164,7 +134,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'  // ← importar ambos
+import { useRoute, useRouter } from 'vue-router'
 import { productsService } from '@/services/products'
 import { userService } from '@/services/user'
 import { useAuthStore } from '@/stores/auth'
@@ -172,12 +142,12 @@ import ProgressSpinner from 'primevue/progressspinner'
 import type { Product } from '@/types'
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598900000000'
-const CUSTOMIZATION_PRICE = 4990 // R$ 49,90 em centavos
+const CUSTOMIZATION_PRICE = 4990
 const APP_BASE_URL = import.meta.env.VITE_APP_URL || window.location.origin
 
-const route = useRoute()   // ← para pegar parâmetros da URL
-const router = useRouter() // ← para navegação
-const authStore = useAuthStore() // ← instância do store
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 
 const product = ref<Product | null>(null)
 const loading = ref(true)
@@ -188,7 +158,7 @@ const shareToast = ref('')
 const customName = ref('')
 const customNumber = ref<number | null>(null)
 
-// Wishlist
+
 const isWishlisted = ref(false)
 const wishlistLoading = ref(false)
 
@@ -283,7 +253,7 @@ async function handleShare() {
 }
 
 async function checkWishlistStatus() {
-  if (!authStore.isAuthenticated) return  // ← usar authStore
+  if (!authStore.isAuthenticated) return
   if (!product.value) return
   try {
     isWishlisted.value = await userService.isInWishlist(product.value.id)
@@ -298,7 +268,7 @@ async function toggleWishlist() {
     return
   }
   if (!product.value) return
-  
+
   wishlistLoading.value = true
   try {
     if (isWishlisted.value) {
@@ -340,12 +310,12 @@ onMounted(async () => {
 
     product.value = rawProduct
 
-    // 🔥 Verificar wishlist AFTER product está carregado
+
     if (product.value && authStore.isAuthenticated) {
       await checkWishlistStatus()
     }
 
-    // Selecionar primeiro tamanho disponível
+
     if (product.value.enableCategoricalSizes && product.value.stockCategorical.length > 0) {
       const availableSize = product.value.stockCategorical.find(
         size => (product.value!.stockCategoricalBySize[size] ?? 0) > 0
@@ -367,58 +337,184 @@ onMounted(async () => {
 
 <style scoped>
 /* ── Raiz ─────────────────────────────────────────────────── */
-.detail-page { min-height: 100vh; background: #0d1117; color: #f0f6fc; }
+.detail-page {
+  min-height: 100vh;
+  background: #0d1117;
+  color: #f0f6fc;
+}
 
 /* ── Navbar ──────────────────────────────────────────────── */
-.navbar { background: #161b22; border-bottom: 1px solid #2d3748; height: 52px; position: sticky; top: 0; z-index: 50; }
-.navbar-inner { max-width: 1280px; margin: 0 auto; padding: 0 20px; height: 100%; display: flex; align-items: center; gap: 12px; }
-.back-link { display: flex; align-items: center; gap: 6px; color: #8b949e; text-decoration: none; font-size: 13px; font-weight: 600; white-space: nowrap; }
-.back-link:hover { color: #f0f6fc; }
-.brand { flex: 1; text-align: center; font-size: 14px; font-weight: 700; color: #f0f6fc; }
-.spacer { width: 72px; }
+.navbar {
+  background: #161b22;
+  border-bottom: 1px solid #2d3748;
+  height: 52px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #8b949e;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.back-link:hover {
+  color: #f0f6fc;
+}
+
+.brand {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0f6fc;
+}
+
+.spacer {
+  width: 72px;
+}
 
 /* ── Layout ──────────────────────────────────────────────── */
-.main { max-width: 1280px; margin: 0 auto; padding: 20px 20px 52px; }
-.loading-state { display: flex; justify-content: center; padding: 60px 0; }
-.content-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+.main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 20px 52px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
 
 /* ── Galeria ─────────────────────────────────────────────── */
-.gallery-section { display: flex; flex-direction: column; gap: 10px; }
+.gallery-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .main-image {
-  position: relative; aspect-ratio: 1/1;
-  background: #1c2330; border: 1px solid #2d3748;
-  border-radius: 14px; overflow: hidden;
+  position: relative;
+  aspect-ratio: 1/1;
+  background: #1c2330;
+  border: 1px solid #2d3748;
+  border-radius: 14px;
+  overflow: hidden;
 }
-.main-image img { width: 100%; height: 100%; object-fit: cover; }
+
+.main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .badge-featured {
-  position: absolute; top: 12px; left: 12px;
-  background: #1e1508; border: 1px solid #4a3008; color: #d29922;
-  font-size: 10px; font-weight: 700; letter-spacing: .4px;
-  padding: 3px 10px; border-radius: 5px;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #1e1508;
+  border: 1px solid #4a3008;
+  color: #d29922;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  padding: 3px 10px;
+  border-radius: 5px;
 }
 
-.thumbnails { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.thumbnails::-webkit-scrollbar { display: none; }
+.thumbnails {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.thumbnails::-webkit-scrollbar {
+  display: none;
+}
 
 .thumbnail {
-  width: 56px; height: 56px; flex-shrink: 0;
-  border-radius: 8px; border: 1px solid #2d3748;
-  overflow: hidden; cursor: pointer; padding: 0; background: none;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid #2d3748;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  background: none;
   transition: border-color .15s;
 }
-.thumbnail:hover { border-color: #3d4f68; }
-.thumbnail.active { border-color: #388bfd; }
-.thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+
+.thumbnail:hover {
+  border-color: #3d4f68;
+}
+
+.thumbnail.active {
+  border-color: #388bfd;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 /* ── Info ────────────────────────────────────────────────── */
-.info-section { display: flex; flex-direction: column; gap: 16px; }
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 /* Header — sem fundo, respira */
-.name { font-size: 20px; font-weight: 700; color: #f0f6fc; line-height: 1.3; margin: 0 0 6px; }
-.club { font-size: 10px; font-weight: 700; color: #484f58; text-transform: uppercase; letter-spacing: .7px; margin: 0 0 4px; }
-.season { font-size: 11px; color: #484f58; margin: 0; }
+.name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0f6fc;
+  line-height: 1.3;
+  margin: 0 0 6px;
+}
+
+.club {
+  font-size: 10px;
+  font-weight: 700;
+  color: #484f58;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  margin: 0 0 4px;
+}
+
+.season {
+  font-size: 11px;
+  color: #484f58;
+  margin: 0;
+}
 
 /* ── Bloco compartilhado ─────────────────────────────────── */
 /* Aplique .block em price-section, size-section, customization-section, description-section */
@@ -426,95 +522,229 @@ onMounted(async () => {
 .size-section,
 .customization-section,
 .description-section {
-  background: #161b22; border: 1px solid #2d3748;
-  border-radius: 12px; padding: 14px;
+  background: #161b22;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 14px;
 }
 
 .label {
-  font-size: 10px; font-weight: 700; color: #484f58;
-  text-transform: uppercase; letter-spacing: .6px;
-  display: block; margin-bottom: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #484f58;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  display: block;
+  margin-bottom: 10px;
 }
 
 /* ── Preço ───────────────────────────────────────────────── */
-.price-wrapper { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.price { font-size: 26px; font-weight: 700; color: #f0f6fc; }
-.price-original { font-size: 15px; color: #484f58; text-decoration: line-through; }
+.price-wrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.price {
+  font-size: 26px;
+  font-weight: 700;
+  color: #f0f6fc;
+}
+
+.price-original {
+  font-size: 15px;
+  color: #484f58;
+  text-decoration: line-through;
+}
+
 .customization-price {
-  display: block; margin-top: 8px; padding-top: 8px;
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid #1e2d3d;
-  font-size: 11px; color: #3fb950;
+  font-size: 11px;
+  color: #3fb950;
 }
 
 /* ── Tamanhos ────────────────────────────────────────────── */
-.size-selector { display: flex; flex-wrap: wrap; gap: 7px; }
+.size-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
 
 .size-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 44px; height: 40px; padding: 0 12px;
-  background: #1c2330; border: 1px solid #2d3748;
-  border-radius: 8px; color: #8b949e;
-  font-size: 12px; font-weight: 700; cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 40px;
+  padding: 0 12px;
+  background: #1c2330;
+  border: 1px solid #2d3748;
+  border-radius: 8px;
+  color: #8b949e;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
   transition: border-color .15s, background .15s, color .15s;
 }
-.size-btn:hover:not(:disabled) { border-color: #3d4f68; color: #f0f6fc; }
-.size-btn.active { background: #0d2240; border-color: #388bfd; color: #388bfd; }
-.size-btn:disabled { opacity: .3; cursor: not-allowed; }
 
-.no-sizes { padding: 12px; text-align: center; color: #484f58; font-size: 13px; }
+.size-btn:hover:not(:disabled) {
+  border-color: #3d4f68;
+  color: #f0f6fc;
+}
+
+.size-btn.active {
+  background: #0d2240;
+  border-color: #388bfd;
+  color: #388bfd;
+}
+
+.size-btn:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
+.no-sizes {
+  padding: 12px;
+  text-align: center;
+  color: #484f58;
+  font-size: 13px;
+}
 
 /* ── Personalização ──────────────────────────────────────── */
-.customization-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.custom-field { display: flex; flex-direction: column; gap: 4px; }
+.customization-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.custom-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .custom-input {
   height: 40px;
-  background: #1c2330; border: 1px solid #2d3748;
-  border-radius: 8px; padding: 0 12px;
-  font-size: 13px; color: #f0f6fc; outline: none;
+  background: #1c2330;
+  border: 1px solid #2d3748;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: #f0f6fc;
+  outline: none;
   transition: border-color .15s;
 }
-.custom-input::placeholder { color: #484f58; }
-.custom-input:focus { border-color: #388bfd; }
-.field-hint { font-size: 10px; color: #484f58; }
+
+.custom-input::placeholder {
+  color: #484f58;
+}
+
+.custom-input:focus {
+  border-color: #388bfd;
+}
+
+.field-hint {
+  font-size: 10px;
+  color: #484f58;
+}
 
 .customization-preview {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e2d3d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #1e2d3d;
 }
+
 .preview-badge {
-  background: #1f1635; border: 1px solid #3d2b75; color: #a371f7;
-  font-size: 11px; font-weight: 700; letter-spacing: .4px;
-  padding: 4px 12px; border-radius: 20px;
+  background: #1f1635;
+  border: 1px solid #3d2b75;
+  color: #a371f7;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  padding: 4px 12px;
+  border-radius: 20px;
 }
-.preview-info { font-size: 11px; font-weight: 700; color: #3fb950; }
+
+.preview-info {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3fb950;
+}
 
 /* ── Descrição ───────────────────────────────────────────── */
-.description { font-size: 13px; color: #8b949e; line-height: 1.6; margin: 0; }
+.description {
+  font-size: 13px;
+  color: #8b949e;
+  line-height: 1.6;
+  margin: 0;
+}
 
 /* ── Ações ───────────────────────────────────────────────── */
-.actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
 
 .whatsapp-btn-lg {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  height: 48px; width: 100%;
-  background: #0a2522; border: 1px solid #0e3d38; color: #3fb950;
-  border-radius: 10px; font-size: 14px; font-weight: 700;
-  text-decoration: none; cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  width: 100%;
+  background: #0a2522;
+  border: 1px solid #0e3d38;
+  color: #3fb950;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
   transition: background .15s, border-color .15s;
 }
-.whatsapp-btn-lg:hover { background: #0d2f2a; border-color: #1a5c52; }
+
+.whatsapp-btn-lg:hover {
+  background: #0d2f2a;
+  border-color: #1a5c52;
+}
 
 .share-btn {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  height: 40px; width: 100%;
-  background: transparent; border: 1px solid #2d3748; color: #8b949e;
-  border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid #2d3748;
+  color: #8b949e;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
   transition: border-color .15s, color .15s;
 }
-.share-btn:hover { border-color: #3d4f68; color: #f0f6fc; }
 
-.share-toast { font-size: 11px; color: #3fb950; text-align: center; padding: 4px 0; }
+.share-btn:hover {
+  border-color: #3d4f68;
+  color: #f0f6fc;
+}
+
+.share-toast {
+  font-size: 11px;
+  color: #3fb950;
+  text-align: center;
+  padding: 4px 0;
+}
 
 /* ── Wishlist ─────────────────────────────────────────────── */
 .wishlist-row {
@@ -563,39 +793,112 @@ onMounted(async () => {
 }
 
 /* ── Not found ───────────────────────────────────────────── */
-.not-found { text-align: center; padding: 60px 20px; }
-.not-found p { font-size: 15px; color: #8b949e; margin-bottom: 20px; }
+.not-found {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.not-found p {
+  font-size: 15px;
+  color: #8b949e;
+  margin-bottom: 20px;
+}
 
 /* ── 640px+ ──────────────────────────────────────────────── */
 @media (min-width: 640px) {
-  .navbar-inner { padding: 0 24px; height: 56px; }
-  .main { padding: 28px 24px 56px; }
-  .content-grid { grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
-  .name { font-size: 24px; }
-  .price { font-size: 30px; }
-  .actions { flex-direction: row; }
-  .whatsapp-btn-lg { flex: 2; }
-  .share-btn { flex: 1; }
+  .navbar-inner {
+    padding: 0 24px;
+    height: 56px;
+  }
+
+  .main {
+    padding: 28px 24px 56px;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+
+  .name {
+    font-size: 24px;
+  }
+
+  .price {
+    font-size: 30px;
+  }
+
+  .actions {
+    flex-direction: row;
+  }
+
+  .whatsapp-btn-lg {
+    flex: 2;
+  }
+
+  .share-btn {
+    flex: 1;
+  }
 }
 
 /* ── 1024px+ ─────────────────────────────────────────────── */
 @media (min-width: 1024px) {
-  .main { padding: 36px 32px 64px; }
-  .content-grid { gap: 48px; }
-  .name { font-size: 28px; }
-  .price { font-size: 34px; }
+  .main {
+    padding: 36px 32px 64px;
+  }
+
+  .content-grid {
+    gap: 48px;
+  }
+
+  .name {
+    font-size: 28px;
+  }
+
+  .price {
+    font-size: 34px;
+  }
 }
 
 /* ── 380px ───────────────────────────────────────────────── */
 @media (max-width: 380px) {
-  .navbar-inner { padding: 0 12px; }
-  .main { padding: 14px 12px 40px; }
-  .name { font-size: 18px; }
-  .price { font-size: 22px; }
-  .size-btn { min-width: 38px; height: 36px; font-size: 11px; }
-  .thumbnail { width: 46px; height: 46px; }
-  .customization-grid { grid-template-columns: 1fr; }
-  .price-section, .size-section, .customization-section, .description-section { padding: 12px; }
-}
+  .navbar-inner {
+    padding: 0 12px;
+  }
 
+  .main {
+    padding: 14px 12px 40px;
+  }
+
+  .name {
+    font-size: 18px;
+  }
+
+  .price {
+    font-size: 22px;
+  }
+
+  .size-btn {
+    min-width: 38px;
+    height: 36px;
+    font-size: 11px;
+  }
+
+  .thumbnail {
+    width: 46px;
+    height: 46px;
+  }
+
+  .customization-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .price-section,
+  .size-section,
+  .customization-section,
+  .description-section {
+    padding: 12px;
+  }
+}
 </style>
