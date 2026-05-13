@@ -207,7 +207,7 @@ const whatsappUrl = computed(() => {
   }
 
   if (hasStock) {
-    msg = `Olá! Tenho interesse na camisa:\n\n` +
+    msg = `Olá! Tenho interesse no produto:\n\n` +
       `*${product.value.name}*\n` +
       `Time: ${product.value.club} | Temporada: ${product.value.season}\n` +
       `Tamanho: ${selectedSize.value}${customizationLine}\n` +

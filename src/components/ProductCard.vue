@@ -148,7 +148,7 @@ const formatPrice = (cents: number) =>
 
 const whatsappUrl = computed(() => {
   const msg = encodeURIComponent(
-    `Olá! Tenho interesse na camisa:\n\n` +
+    `Olá! Tenho interesse no produto:\n\n` +
     `*${props.product.name}*\n` +
     `Time: ${props.product.club} | Temporada: ${props.product.season}\n` +
     `Preço: ${formatPrice(props.product.basePrice)}\n\n` +
