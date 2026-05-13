@@ -6,8 +6,39 @@ export interface User {
   id: string
   email: string
   name: string
-  favoriteTeam?: string
   role?: string
+  favoriteTeam?: string
+  emailVerified?: boolean
+  phone?: string
+  
+  addressStreet?: string
+  addressNumber?: string
+  addressComplement?: string
+  addressCity?: string
+  addressState?: string
+  addressZip?: string
+  addressCountry?: string
+}
+
+
+export interface UpdateProfileInput {
+  name?: string
+  email?: string
+  phone?: string
+  favoriteTeam?: string
+  
+  addressStreet?: string
+  addressNumber?: string
+  addressComplement?: string
+  addressCity?: string
+  addressState?: string
+  addressZip?: string
+}
+ 
+export interface ChangePasswordInput {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
 }
 
 export interface AuthResponse {
