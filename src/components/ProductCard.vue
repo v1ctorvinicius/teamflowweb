@@ -37,9 +37,20 @@
       <h3 class="product-name">{{ product.name }}</h3>
       <p class="season-label">{{ product.season }}</p>
 
-      <div class="price-row">
-        <span class="price">{{ formatPrice(product.basePrice) }}</span>
-      </div>
+    <!-- ── Badges (Tipo + Temporada) ── -->
+    <div class="product-badges">
+      <span class="badge" :class="product.type === 'PLAYER' ? 'badge--player' : 'badge--fan'">
+        {{ product.type === 'PLAYER' ? 'Jogador' : 'Torcedor' }}
+      </span>
+      <span class="badge badge--season">
+        {{ product.season }}
+      </span>
+      <span v-if="isFavoriteTeam" class="badge badge--my-team">
+        ❤️ Meu time
+      </span>
+    </div>
+      
+
 
       <!-- Tamanhos disponíveis -->
       <div v-if="availableSizes.length" class="sizes-row">
@@ -52,12 +63,14 @@
             'size-guest': !isAuthenticated,
           }"
         >{{ size }}</span>
-        <!-- <span v-if="availableSizes.length > 6" class="size-more">
-          +{{ availableSizes.length - 6 }}
-        </span> -->
+
       </div>
       <div v-else class="sizes-row">
         <span class="size-chip size-oos">Sem tamanhos</span>
+      </div>
+
+      <div class="price-row">
+        <span class="price">{{ formatPrice(product.basePrice) }}</span>
       </div>
 
       <!-- Ações -->
@@ -204,192 +217,229 @@ async function handleShare() {
 }
 </script>
 <style scoped>
+/* ── Raiz ─────────────────────────────────────────────────── */
 .product-card {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 16px;
+  background: #161b22;
+  border: 1px solid #2d3748;
+  border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   display: flex;
   flex-direction: column;
-  position: relative;
+  transition: border-color .15s;
   height: 100%;
 }
-.product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); border-color: #475569; }
-.product-card.is-favorite-team { border-color: #f43f5e; box-shadow: 0 0 0 1px #f43f5e, 0 8px 24px rgba(244,63,94,0.15); }
-.product-card.is-featured { border-color: #f59e0b; box-shadow: 0 0 0 1px #f59e0b, 0 8px 24px rgba(245,158,11,0.1); }
+.product-card:hover { border-color: #3d4f68; }
 
-/* 🔥 Banners com altura fixa para manter alinhamento */
-.top-banner { 
-  font-size: 0.9em; 
-  font-weight: 700; 
-  padding: 5px 12px; 
-  letter-spacing: 0.5px; 
-  text-align: center; 
-  height: 29px;
+/* Estados — só a borda muda, sem box-shadow ou glow */
+.product-card.is-favorite-team { border-color: #5a1a18; }
+.product-card.is-favorite-team:hover { border-color: #f85149; }
+.product-card.is-featured { border-color: #4a3008; }
+.product-card.is-featured:hover { border-color: #d29922; }
+
+/* ── Banner de topo — sempre 24px, nunca expande ─────────── */
+.top-banner {
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.banner-heart { background: linear-gradient(90deg, #f43f5e, #e11d48); color: #fff; }
-.banner-featured { background: linear-gradient(90deg, #d97706, #b45309); color: #fff; }
-.banner-empty { background: transparent; color: transparent; }
-
-.image-wrap { position: relative; aspect-ratio: 1/1; background: #0f172a; overflow: hidden; }
-.product-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-.product-card:hover .product-img { transform: scale(1.04); }
-
-.badge-new { position: absolute; top: 8px; left: 8px; background: linear-gradient(90deg, #7c3aed, #6d28d9); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; z-index: 1; }
-
-.oos-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; }
-.oos-label { background: #ef4444; color: #fff; font-size: 13px; font-weight: 800; padding: 6px 18px; border-radius: 8px; letter-spacing: 1.5px; }
-
-.card-body { 
-  padding: 14px 16px 16px; 
-  display: flex; 
-  flex-direction: column; 
-  flex: 1;
-  gap: 8px;
-}
-.club-label { font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.8px; margin: 0; }
-.product-name { 
-  font-size: 14px; 
-  font-weight: 600; 
-  color: #f1f5f9; 
-  margin: 0; 
-  line-height: 1.35; 
-  display: -webkit-box; 
-  -webkit-line-clamp: 2; 
-  -webkit-box-orient: vertical; 
-  overflow: hidden;
-  min-height: 38px;
-}
-.season-label { font-size: 12px; color: #64748b; margin: 0; }
-.price-row { margin: 0; }
-.price { font-size: 18px; font-weight: 800; color: #34d399; }
-
-/* 🔥 Tamanhos com altura fixa */
-.sizes-row { 
-  display: flex; 
-  flex-wrap: wrap; 
-  gap: 5px; 
-  margin: 0; 
-  min-height: 28px;
-}
-.size-chip { 
-  border: 1px solid #475569; 
-  border-radius: 5px; 
-  padding: 2px 7px; 
-  font-size: 11px; 
-  font-weight: 600; 
-  color: #cbd5e1;
-  white-space: nowrap;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.size-chip.size-oos { border-color: #1e293b; color: #334155; background: #0f172a; }
-.size-chip.size-guest { border-color: #334155; color: #475569; }
-.size-more { font-size: 11px; color: #64748b; align-self: center; white-space: nowrap; }
-
-/* 🔥 AÇÕES: alinhamento vertical em telas pequenas */
-.actions { 
-  margin-top: auto; 
-  display: flex; 
-  flex-direction: row;
-  gap: 6px; 
-  padding-top: 8px;
-}
-.details-btn { 
-  flex: 1; 
-  padding: 9px 0; 
-  background: #2563eb; 
-  color: #fff; 
-  border: none; 
-  border-radius: 9px; 
-  font-size: 13px; 
-  font-weight: 600; 
-  cursor: pointer; 
-  transition: background 0.15s;
-  white-space: nowrap;
-  min-width: 0;
-}
-.details-btn:hover:not(.btn-oos) { background: #1d4ed8; }
-.details-btn.btn-oos { background: #374151; color: #6b7280; cursor: default; }
-
-.whatsapp-btn { 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  gap: 5px; 
-  padding: 9px 12px; 
-  background: #16a34a; 
-  color: #fff; 
-  border: none; 
-  border-radius: 9px; 
-  font-size: 13px; 
-  font-weight: 600; 
-  text-decoration: none; 
-  cursor: pointer; 
-  transition: background 0.15s; 
-  white-space: nowrap;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .4px;
   flex-shrink: 0;
 }
-.whatsapp-btn:hover { background: #15803d; }
-.wa-icon { width: 14px; height: 14px; flex-shrink: 0; }
+.banner-heart    { background: #2a0f0e; color: #ffa19c; border-bottom: 1px solid #5a1a18; }
+.banner-featured { background: #1e1508; color: #e8b44a; border-bottom: 1px solid #4a3008; }
+.banner-empty    { background: transparent; }
 
-.share-btn { 
-  width: 40px; 
-  flex-shrink: 0; 
-  background: #0f172a; 
-  border: 1px solid #334155; 
-  color: #94a3b8; 
-  border-radius: 9px; 
-  font-size: 14px; 
-  cursor: pointer; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  transition: all 0.15s; 
+/* ── Imagem ───────────────────────────────────────────────── */
+.image-wrap {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #1c2330;
+  overflow: hidden;
+  flex-shrink: 0;
 }
-.share-btn:hover { border-color: #60a5fa; color: #60a5fa; background: rgba(96,165,250,0.08); }
+.product-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform .3s;
+}
+.product-card:hover .product-img { transform: scale(1.03); }
 
-.share-toast { margin-top: 6px; font-size: 11px; color: #34d399; text-align: center; animation: fadeIn 0.2s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; } }
+/* badges */
+.product-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 6px;
+}
+.badge-new {
+  position: absolute;
+  top: 8px; left: 8px;
+  background: #1f1635;
+  border: 1px solid #3d2b75;
+  color: #c4a6f8;
+  font-size: 0.7em; font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 5px;
+  letter-spacing: .4px;
+  z-index: 1;
+}
 
-.guest-nudge { margin-top: 8px; font-size: 11px; color: #475569; text-align: center; }
-.guest-nudge a { color: #60a5fa; text-decoration: none; font-weight: 600; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.badge--fan {
+  background: #0a2522;
+  border: 1px solid #0e3d38;
+  color: #3fb950;
+}
+
+.badge--player {
+  background: #0d2240;
+  border: 1px solid #1f4280;
+  color: #388bfd;
+}
+
+.badge--season {
+  background: #222a38;
+  border: 1px solid #2d3748;
+  color: #8b949e;
+}
+
+.badge--my-team {
+  background: #1f1635;
+  border: 1px solid #3d2b75;
+  color: #a371f7;
+}
+
+
+/*------------------*/
+
+.oos-overlay {
+  position: absolute; inset: 0;
+  background: rgba(13, 17, 23, .75);
+  display: flex; align-items: center; justify-content: center;
+}
+.oos-label {
+  background: #1c2330;
+  border: 1px solid #2d3748;
+  color: #8b949e;
+  font-size: 10px; font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+}
+
+/* ── Corpo ────────────────────────────────────────────────── */
+.card-body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 5px;
+}
+
+.club-label {
+  font-size: 10px; font-weight: 700;
+  color: #484f58;
+  text-transform: uppercase; letter-spacing: .7px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin: 0;
+}
+
+.product-name {
+  font-size: 12px; font-weight: 600;
+  color: #f0f6fc;
+  margin: 0; line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(12px * 1.4 * 2);
+}
+
+/* season-label continua mas mais discreto */
+.season-label { display: none; } /* já vem no badge */
+
+/* ── Preço ────────────────────────────────────────────────── */
+.price-row { margin: 0; }
+.price { font-size: 15px; font-weight: 700; color: #f0f6fc; }
+
+/* ── Tamanhos ─────────────────────────────────────────────── */
+.sizes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-height: 20px;
+  align-items: center;
+}
+.size-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 18px; min-width: 24px; padding: 0 4px;
+  background: #222a38; border: 1px solid #2d3748;
+  border-radius: 4px;
+  font-size: 9px; font-weight: 700;
+  color: #8b949e;
+}
+.size-chip.size-oos  { opacity: .3; text-decoration: line-through; }
+.size-chip.size-guest { opacity: .5; filter: blur(1.5px); user-select: none; }
+
+/* ── Ações ────────────────────────────────────────────────── */
+.actions {
+  margin-top: auto;
+  display: flex;
+  gap: 5px;
+  padding-top: 6px;
+}
+
+.whatsapp-btn {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  height: 32px;
+  background: #0a2522; border: 1px solid #0e3d38;
+  color: #3fb950;
+  border-radius: 8px;
+  font-size: 11px; font-weight: 700;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.whatsapp-btn:hover { background: #0d2f2a; border-color: #1a5c52; }
+.wa-icon { width: 12px; height: 12px; flex-shrink: 0; }
+
+/* Esgotado: mesmo layout mas desativado */
+.whatsapp-btn[disabled],
+.whatsapp-btn.btn-oos {
+  background: #222a38; border-color: #2d3748;
+  color: #484f58; pointer-events: none; cursor: not-allowed;
+}
+
+.share-btn {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid #2d3748;
+  border-radius: 8px; color: #484f58;
+  cursor: pointer; font-size: 14px;
+  transition: border-color .15s, color .15s;
+}
+.share-btn:hover { border-color: #3d4f68; color: #8b949e; }
+
+.share-toast { font-size: 10px; color: #3fb950; text-align: center; padding: 3px 0; }
+
+.guest-nudge {
+  font-size: 10px; color: #484f58; text-align: center; padding-top: 2px; margin: 0;
+}
+.guest-nudge a { color: #388bfd; text-decoration: none; font-weight: 600; }
 .guest-nudge a:hover { text-decoration: underline; }
-
-/* 🔥 RESPONSIVO: botões em coluna em telas pequenas */
-@media (max-width: 500px) {
-  .actions { 
-    flex-direction: column; 
-    gap: 8px;
-  }
-  .details-btn, .whatsapp-btn { 
-    width: 100%; 
-    white-space: normal;
-    padding: 9px 12px;
-  }
-  .share-btn { 
-    width: 100%; 
-    padding: 9px 0;
-  }
-  .product-name { 
-    font-size: 13px; 
-    min-height: 34px;
-  }
-  .price { font-size: 16px; }
-}
-
-@media (max-width: 375px) {
-  .card-body { padding: 10px 12px 12px; gap: 6px; }
-  .details-btn, .whatsapp-btn { font-size: 12px; }
-  .product-name { font-size: 12px; min-height: 30px; }
-  .price { font-size: 14px; }
-  .size-chip { padding: 1px 5px; font-size: 10px; }
-  .share-btn { width: 100%; }
-}
 </style>
