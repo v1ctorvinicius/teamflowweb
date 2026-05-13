@@ -627,7 +627,7 @@ async function saveProduct() {
   try {
     const payload = {
       name: form.value.name,
-      club: form.value.club || undefined,
+      club: form.value.club || null,
       brand: form.value.brand,
       season: form.value.season,
       type: form.value.type,
