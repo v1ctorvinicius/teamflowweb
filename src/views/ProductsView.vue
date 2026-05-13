@@ -1,7 +1,7 @@
 <!-- src/views/ProductsView.vue -->
 <template>
   <div class="page">
-    <header class="navbar">
+    <!-- <header class="navbar">
       <div class="navbar-inner">
         <div class="brand"><span class="brand-icon">⚽</span><span class="brand-name">TeamFlow</span></div>
         <div class="nav-right">
@@ -19,7 +19,7 @@
           </template>
         </div>
       </div>
-    </header>
+    </header> -->
 
     <div v-if="!isAuthenticated" class="guest-banner">
       <span class="guest-banner-text">🎽 Crie uma conta grátis para ver estoque por tamanho, filtrar pelo seu time e muito mais</span>

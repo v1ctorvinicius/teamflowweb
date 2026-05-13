@@ -1,7 +1,7 @@
 <template>
   <div class="detail-page">
     <!-- Navbar -->
-    <header class="navbar">
+    <!-- <header class="navbar">
       <div class="navbar-inner">
         <router-link to="/" class="back-link">
           <i class="pi pi-arrow-left" /> Voltar
@@ -9,7 +9,7 @@
         <div class="brand">⚽ TeamFlow</div>
         <div class="spacer" />
       </div>
-    </header>
+    </header> -->
 
     <main class="main">
       <div v-if="loading" class="loading-state">
