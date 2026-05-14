@@ -27,8 +27,14 @@
             <label class="form-label">Nome</label>
             <div class="input-wrap">
               <i class="pi pi-user input-icon" />
-              <input v-model="name" type="text" class="form-input" :class="{ 'input-error': errors.name }"
-                placeholder="Seu nome" />
+              <input 
+                v-model="name" 
+                type="text" 
+                class="form-input" 
+                :class="{ 'input-error': errors.name }"
+                placeholder="Seu nome" 
+                @blur="validate"
+              />
             </div>
             <span v-if="errors.name" class="field-error">{{ errors.name }}</span>
           </div>
@@ -37,24 +43,51 @@
             <label class="form-label">Email</label>
             <div class="input-wrap">
               <i class="pi pi-envelope input-icon" />
-              <input v-model="email" type="email" class="form-input" :class="{ 'input-error': errors.email }"
-                placeholder="seu@email.com" />
+              <input 
+                v-model="email" 
+                type="email" 
+                class="form-input" 
+                :class="{ 'input-error': errors.email }"
+                placeholder="seu@email.com" 
+                @blur="validate"
+              />
             </div>
             <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Senha</label>
+            <label class="form-label">Senha *</label>
             <div class="input-wrap">
               <i class="pi pi-lock input-icon" />
-              <input v-model="password" :type="showPassword ? 'text' : 'password'" class="form-input"
-                :class="{ 'input-error': errors.password }" placeholder="Mínimo 8 caracteres" />
-              <button type="button" class="toggle-pass" @click="showPassword = !showPassword"
-                :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'">
+              <input 
+                v-model="password" 
+                :type="showPassword ? 'text' : 'password'" 
+                class="form-input"
+                :class="{ 'input-error': errors.password }" 
+                placeholder="Mínimo 8 caracteres" 
+                @blur="validate"
+              />
+              <button type="button" class="toggle-pass" @click="showPassword = !showPassword">
                 <i :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" />
               </button>
             </div>
             <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirmar senha *</label>
+            <div class="input-wrap">
+              <i class="pi pi-lock input-icon" />
+              <input
+                v-model="confirmPassword"
+                type="password"
+                class="form-input"
+                :class="{ 'input-error': passwordError }"
+                placeholder="Digite a senha novamente"
+                @blur="validate"
+              />
+            </div>
+            <span v-if="passwordError" class="field-error">{{ passwordError }}</span>
           </div>
 
 
@@ -114,10 +147,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { clubsService, type Club } from '@/services/clubs'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -135,6 +169,11 @@ const clubs = ref<Club[]>([])
 const clubsLoading = ref(true)
 const clubsError = ref(false)
 
+const toast = useToast()
+const confirmPassword = ref('')
+const passwordError = ref('')
+const error = ref('')
+
 onMounted(async () => {
   try {
     clubs.value = await clubsService.list()
@@ -147,24 +186,43 @@ onMounted(async () => {
 
 const validate = () => {
   const e: Record<string, string> = {}
+  
   if (!name.value.trim()) e.name = 'Nome é obrigatório'
+  
   if (!email.value.trim()) {
     e.email = 'Email é obrigatório'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
     e.email = 'Email inválido'
   }
+  
   if (!password.value) {
     e.password = 'Senha é obrigatória'
   } else if (password.value.length < 8) {
     e.password = 'Senha deve ter no mínimo 8 caracteres'
   }
+  
+  if (password.value !== confirmPassword.value) {
+    passwordError.value = 'As senhas não coincidem'
+  } else {
+    passwordError.value = ''
+  }
+  
   errors.value = e
-  return Object.keys(e).length === 0
+  return Object.keys(e).length === 0 && !passwordError.value
 }
 
-const handleRegister = async () => {
+async function handleRegister() {
+  passwordError.value = ''
+  error.value = ''
   serverError.value = ''
-  if (!validate()) return
+
+  if (!validate()) {
+    if (errors.value.name) {
+      // scroll ou focus no campo
+    }
+    return
+  }
+
   loading.value = true
   try {
     await authStore.register({
@@ -173,9 +231,21 @@ const handleRegister = async () => {
       password: password.value,
       favoriteTeam: favoriteTeam.value || undefined,
     })
-    router.go(0);
-  } catch (error: any) {
-    serverError.value = error.response?.data?.message || 'Erro ao cadastrar. Tente novamente.'
+    toast.add({
+      severity: 'success',
+      summary: 'Conta criada!',
+      detail: 'Bem-vindo ao TeamFlow.',
+      life: 3000,
+    })
+    router.push('/')
+  } catch (err: any) {
+    serverError.value = err.response?.data?.message || 'Erro ao criar conta. Tente novamente.'
+    toast.add({
+      severity: 'error',
+      summary: 'Erro ao criar conta',
+      detail: serverError.value,
+      life: 4000,
+    })
   } finally {
     loading.value = false
   }
@@ -383,6 +453,11 @@ const handleRegister = async () => {
   border-color: #f43f5e !important;
 }
 
+.input-error:focus {
+  border-color: #f43f5e !important;
+  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.2);
+}
+
 /* Estilos específicos do select */
 .form-select {
   appearance: none;
@@ -444,6 +519,7 @@ const handleRegister = async () => {
 .field-error {
   font-size: 12px;
   color: #f43f5e;
+  margin: 4px 0 0;
 }
 
 .field-hint {
@@ -502,6 +578,12 @@ const handleRegister = async () => {
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
+
+/*.field-error {
+  font-size: 12px;
+  color: #f43f5e;
+  margin: 4px 0 0;
+}*/
 
 @keyframes spin {
   to {
