@@ -3,6 +3,7 @@
     <template v-if="!hideLayout">
       <Navbar />
       <main class="app-main">
+        <Toast position="bottom-right" />
         <router-view />
       </main>
       <Footer />
@@ -13,10 +14,11 @@
 
 <script setup lang="ts">
 import { onMounted, computed } from 'vue'
-import {useRoute} from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
+import Toast from 'primevue/toast'
 
 const authStore = useAuthStore();
 const route = useRoute();

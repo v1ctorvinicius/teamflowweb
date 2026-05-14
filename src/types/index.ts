@@ -1,6 +1,7 @@
 // src/types/index.ts
 
 export type ProductCategory = "SHIRT" | "SHOE" | "COMBO" | "ACCESSORY" | string;
+export type ProductGender = "MASCULINE" | "FEMININE" | "UNISEX";
 
 export interface ProductCategoryDef {
   id: string;
@@ -19,7 +20,6 @@ export interface User {
   favoriteTeam?: string;
   emailVerified?: boolean;
   phone?: string;
-
   addressStreet?: string;
   addressNumber?: string;
   addressComplement?: string;
@@ -34,7 +34,6 @@ export interface UpdateProfileInput {
   email?: string;
   phone?: string;
   favoriteTeam?: string;
-
   addressStreet?: string;
   addressNumber?: string;
   addressComplement?: string;
@@ -60,32 +59,33 @@ export interface AuthResponse {
 export interface Product {
   id: string;
   name: string;
-
   club?: string | null;
-
   brand?: string | null;
-
   season?: string | null;
-
   category: ProductCategory;
   categorySlug?: string | null;
-
   type: "PLAYER" | "FAN";
 
+  gender: ProductGender;
+
+  allowPersonalization: boolean;
+
+  infiniteStock: boolean;
   enableCategoricalSizes: boolean;
   categoricalSizesLabel: string;
   stockCategorical: string[];
   stockCategoricalBySize: Record<string, number>;
-
   enableNumericSizes: boolean;
   numericSizesLabel: string;
   stockNumeric: Record<string, number>;
+
+  isNew: boolean | null;
+  isNewDays: number;
 
   basePrice: number;
   description: string | null;
   imageUrl: string | null;
   imageUrls: string[];
-
   isActive: boolean;
   isFeatured: boolean;
   slug: string;
@@ -106,6 +106,7 @@ export interface ProductsResponse {
 export interface ProductFilters {
   club?: string;
   brand?: string;
+  gender?: ProductGender;
   type?: "PLAYER" | "FAN";
   category?: ProductCategory;
   categorySlug?: string;

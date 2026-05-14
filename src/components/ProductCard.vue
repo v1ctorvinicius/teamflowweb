@@ -11,45 +11,51 @@
     <div class="image-wrap">
       <img :src="mainImage || placeholder" :alt="product.name" class="product-img" loading="lazy" />
 
-      <div v-if="isNew && !isOutOfStock" class="badge-new">🔥 Novo</div>
+      <div v-if="showNewBadge && !isOutOfStock" class="badge-new">🔥 Novo</div>
 
-      <!-- 🔥 Só mostra overlay se o produto TEM sistema de tamanhos E está esgotado -->
-      <div v-if="hasSizeSystem && isOutOfStock" class="oos-overlay">
+      <div v-if="hasSizeSystem && !product.infiniteStock && isOutOfStock" class="oos-overlay">
         <span class="oos-label">ESGOTADO</span>
       </div>
     </div>
 
     <div class="card-body">
-      <p class="club-label">{{ product.club }}</p>
+      <!-- Clube e/ou Marca -->
+      <p class="club-label">
+        <span v-if="product.club">{{ product.club }}</span>
+        <span v-if="product.club && product.brand" class="separator"> · </span>
+        <span v-if="product.brand" class="brand-label">{{ product.brand }}</span>
+      </p>
+
       <h3 class="product-name">{{ product.name }}</h3>
-      <p class="season-label">{{ product.season }}</p>
+      <p v-if="product.season" class="season-label">{{ product.season }}</p>
 
       <div class="product-badges">
-        <span class="badge" :class="product.type === 'PLAYER' ? 'badge--player' : 'badge--fan'">
+        <span v-if="product.type" class="badge" :class="product.type === 'PLAYER' ? 'badge--player' : 'badge--fan'">
           {{ product.type === 'PLAYER' ? 'Jogador' : 'Torcedor' }}
         </span>
-        <span class="badge badge--season">
-          {{ product.season }}
+
+        <span v-if="product.gender !== 'UNISEX'" class="badge badge--gender">
+          {{ genderLabel }}
         </span>
-        <span v-if="isFavoriteTeam" class="badge badge--my-team">
-          ❤️ Meu time
-        </span>
+
+        <span v-if="isFavoriteTeam" class="badge badge--my-team">❤️ Meu time</span>
+
+        <span v-if="product.allowPersonalization" class="badge badge--personalization">✏️ Personaliz.</span>
       </div>
 
-      <!-- 🔥 Seção de tamanhos - comportamento diferente para produtos sem sistema -->
       <div v-if="hasSizeSystem">
         <div v-if="availableSizes.length" class="sizes-row">
           <span v-for="size in availableSizes.slice(0, 6)" :key="size" class="size-chip" :class="{
-            'size-oos': isAuthenticated && getStockForSize(size) === 0,
+            'size-oos': !product.infiniteStock && isAuthenticated && getStockForSize(size) === 0,
             'size-guest': !isAuthenticated,
           }">{{ size }}</span>
+          <span v-if="availableSizes.length > 6" class="size-more">+{{ availableSizes.length - 6 }}</span>
         </div>
         <div v-else class="sizes-row">
           <span class="size-chip size-oos">Sem tamanhos</span>
         </div>
       </div>
       <div v-else class="sizes-row">
-        <!-- 🔥 Produtos sem sistema de tamanho (bolas, acessórios) mostram esta mensagem -->
         <span class="size-chip size-universal">Tamanho único</span>
       </div>
 
@@ -58,7 +64,6 @@
       </div>
 
       <div class="actions">
-
         <a class="whatsapp-btn" :href="whatsappUrl" target="_blank" rel="noopener noreferrer" @click.stop>
           <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor">
             <path
@@ -108,15 +113,11 @@ const mainImage = computed(() =>
 )
 
 const availableSizes = computed<string[]>(() => {
-  if (props.product.enableCategoricalSizes) {
-    return props.product.stockCategorical || []
-  } else if (props.product.enableNumericSizes) {
-    return Object.keys(props.product.stockNumeric || {})
-  }
+  if (props.product.enableCategoricalSizes) return props.product.stockCategorical || []
+  if (props.product.enableNumericSizes) return Object.keys(props.product.stockNumeric || {})
   return []
 })
 
-// 🔥 VERIFICA SE O PRODUTO TEM SISTEMA DE TAMANHOS HABILITADO
 const hasSizeSystem = computed(() =>
   props.product.enableCategoricalSizes || props.product.enableNumericSizes
 )
@@ -127,33 +128,37 @@ const isFavoriteTeam = computed(() => {
 })
 
 function getStockForSize(size: string): number {
-  if (props.product.enableCategoricalSizes) {
-    return props.product.stockCategoricalBySize?.[size] ?? 0
-  } else if (props.product.enableNumericSizes) {
-    return props.product.stockNumeric?.[size] ?? 0
-  }
+  if (props.product.enableCategoricalSizes) return props.product.stockCategoricalBySize?.[size] ?? 0
+  if (props.product.enableNumericSizes) return props.product.stockNumeric?.[size] ?? 0
   return 0
 }
 
-// 🔥 CORREÇÃO: Produto sem sistema de tamanho NUNCA está esgotado
 const isOutOfStock = computed(() => {
-  // Se não tem sistema de tamanho, produto está disponível (ex: bola, acessório)
   if (!hasSizeSystem.value) return false
-
-  // Se tem sistema mas não tem tamanhos definidos, esgotado
   if (!availableSizes.value.length) return true
-
-  // Se tem tamanhos, verifica se todos têm estoque zero
-  return availableSizes.value.every((s) => getStockForSize(s) === 0)
+  return availableSizes.value.every(s => getStockForSize(s) === 0)
 })
 
-const isNew = computed(() => {
+const showNewBadge = computed(() => {
+  if (props.product.isNew === true) return true
+  if (props.product.isNew === false) return false
+
   try {
     const created = new Date(props.product.createdAt).getTime()
-    return created > Date.now() - 7 * 24 * 60 * 60 * 1000
+    const days = props.product.isNewDays ?? 7
+    return created > Date.now() - days * 24 * 60 * 60 * 1000
   } catch {
     return false
   }
+})
+
+const genderLabel = computed(() => {
+  const map: Record<string, string> = {
+    MASCULINE: '♂ Masculino',
+    FEMININE: '♀ Feminino',
+    UNISEX: 'Unissex',
+  }
+  return map[props.product.gender] || ''
 })
 
 const formatPrice = (cents: number) =>
@@ -163,7 +168,9 @@ const whatsappUrl = computed(() => {
   const msg = encodeURIComponent(
     `Olá! Tenho interesse no produto:\n\n` +
     `*${props.product.name}*\n` +
-    `${props.product.club ? `Time: ${props.product.club} | ` : ''}Temporada: ${props.product.season}\n` +
+    (props.product.club ? `Time: ${props.product.club}\n` : '') +
+    (props.product.brand ? `Marca: ${props.product.brand}\n` : '') +
+    (props.product.season ? `Temporada: ${props.product.season}\n` : '') +
     `Preço: ${formatPrice(props.product.basePrice)}\n\n` +
     `Poderia me dar mais informações?`
   )
@@ -181,10 +188,10 @@ async function handleShare() {
     try {
       await navigator.share({
         title: props.product.name,
-        text: `${props.product.name} — ${props.product.club || 'Produto'} | ${formatPrice(props.product.basePrice)}`,
+        text: `${props.product.name}${props.product.club ? ' — ' + props.product.club : ''} | ${formatPrice(props.product.basePrice)}`,
         url: shareUrl.value,
       })
-    } catch { /* usuário cancelou */ }
+    } catch { /* cancelado */ }
   } else {
     try {
       await navigator.clipboard.writeText(shareUrl.value)
@@ -215,7 +222,6 @@ async function handleShare() {
   border-color: #3d4f68;
 }
 
-/* Estados — só a borda muda, sem box-shadow ou glow */
 .product-card.is-favorite-team {
   border-color: #5a1a18;
 }
@@ -232,7 +238,7 @@ async function handleShare() {
   border-color: #d29922;
 }
 
-/* ── Banner de topo — sempre 24px, nunca expande ─────────── */
+/* ── Banner de topo ─── */
 .top-banner {
   height: 24px;
   display: flex;
@@ -340,6 +346,17 @@ async function handleShare() {
   color: #a371f7;
 }
 
+.badge--gender {
+  background: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.badge--personalization {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
 
 /*------------------*/
 
@@ -397,7 +414,7 @@ async function handleShare() {
   min-height: calc(12px * 1.4 * 2);
 }
 
-/* season-label continua mas mais discreto */
+/* ────────────────────────────── */
 .season-label {
   display: none;
 }
@@ -486,7 +503,7 @@ async function handleShare() {
   flex-shrink: 0;
 }
 
-/* Esgotado: mesmo layout mas desativado */
+/* Esgotado────────────────────────────── */
 .whatsapp-btn[disabled],
 .whatsapp-btn.btn-oos {
   background: #222a38;
@@ -540,5 +557,24 @@ async function handleShare() {
 
 .guest-nudge a:hover {
   text-decoration: underline;
+}
+
+.share-toast {
+  font-size: 11px;
+  color: #34d399;
+  text-align: center;
+  margin: 0;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 </style>
