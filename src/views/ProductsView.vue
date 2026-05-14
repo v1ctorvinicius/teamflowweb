@@ -217,6 +217,7 @@ const pagination = ref({ page: 1, limit: 20, total: 0, totalPages: 0 })
 
 // Filtros unificados
 const searchText = ref('')
+const clubFilter = ref<string | undefined>(undefined)  // 🔥 NOVO: filtro por clube
 const typeFilter = ref<'PLAYER' | 'FAN' | undefined>(undefined)
 const genderFilter = ref<'MASCULINE' | 'FEMININE' | 'UNISEX' | undefined>(undefined)
 const brandFilter = ref<string | undefined>(undefined)
@@ -238,6 +239,15 @@ const availableBrands = computed(() => {
     if (p.brand) brands.add(p.brand)
   })
   return Array.from(brands).sort()
+})
+
+// 🔥 Clubes disponíveis (extraídos dos produtos carregados)
+const availableClubs = computed(() => {
+  const clubs = new Set<string>()
+  products.value.forEach(p => {
+    if (p.club) clubs.add(p.club)
+  })
+  return Array.from(clubs).sort()
 })
 
 const categories = ref<ProductCategoryDef[]>([])
@@ -270,6 +280,7 @@ function clearPriceFilter() {
 
 function clearAllFilters() {
   searchText.value = ''
+  clubFilter.value = undefined      // 🔥 ADICIONAR
   typeFilter.value = undefined
   genderFilter.value = undefined
   brandFilter.value = undefined
@@ -293,6 +304,8 @@ async function fetchProducts(page = 1, reset = false) {
   try {
     const filters: Record<string, any> = { page, limit: 20 }
     
+    // 🔥 ADICIONAR CLUB FILTER
+    if (clubFilter.value) filters.club = clubFilter.value
     if (typeFilter.value) filters.type = typeFilter.value
     if (genderFilter.value) filters.gender = genderFilter.value
     if (brandFilter.value) filters.brand = brandFilter.value
@@ -332,6 +345,7 @@ async function fetchMyTeamCount() {
 
 function resetFilters() {
   searchText.value = ''
+  clubFilter.value = undefined      // 🔥 ADICIONAR
   typeFilter.value = undefined
   genderFilter.value = undefined
   brandFilter.value = undefined
