@@ -2349,9 +2349,10 @@ select.form-input {
 /* ==================== AJUSTES RESPONSIVOS ==================== */
 @media (max-width: 768px) {
   .admin-tabs {
-    overflow-x: auto;
-    flex-direction: column;
+    overflow-x: none;
+    flex-wrap: wrap;
     -webkit-overflow-scrolling: touch;
+    border: 1px solid red;
   }
   
   .tab-btn {
@@ -2386,9 +2387,10 @@ select.form-input {
   }
 
   .admin-tabs {
-    overflow-x: auto;
-    flex-direction: column;
+    overflow-x: none;
+    flex-wrap: wrap;
     -webkit-overflow-scrolling: touch;
+    border: 1px solid red;
   }
 }
 </style>
