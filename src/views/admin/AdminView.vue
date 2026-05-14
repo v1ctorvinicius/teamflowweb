@@ -1207,6 +1207,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+
 /* ── Raiz ─────────────────────────────────────────────────── */
 .admin-page {
   min-height: 100vh;
@@ -1487,6 +1488,7 @@ onMounted(async () => {
 /* ── Tabela ──────────────────────────────────────────────── */
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid #2d3748;
   border-radius: 12px;
 }
@@ -2088,7 +2090,6 @@ select.form-input {
   animation: spin .7s linear infinite;
 }
 
-
 .radio-group {
   display: flex;
   flex-wrap: wrap;
@@ -2192,10 +2193,16 @@ select.form-input {
 /* ==================== ABAS PRINCIPAIS ==================== */
 .admin-tabs {
   display: flex;
-  gap: 4px;
+  gap: 0;
   margin-bottom: 24px;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-btn {
@@ -2209,6 +2216,8 @@ select.form-input {
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
   margin-bottom: -1px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab-btn:hover {
@@ -2348,19 +2357,11 @@ select.form-input {
 
 /* ==================== AJUSTES RESPONSIVOS ==================== */
 @media (max-width: 768px) {
-  .admin-tabs {
-    overflow-x: none;
-    flex-wrap: wrap;
-    -webkit-overflow-scrolling: touch;
-    border: 1px solid red;
-  }
-  
   .tab-btn {
     padding: 8px 14px;
     font-size: 13px;
-    white-space: nowrap;
   }
-  
+
   .users-table th:nth-child(5),
   .users-table td:nth-child(5),
   .users-table th:nth-child(6),
@@ -2369,7 +2370,7 @@ select.form-input {
   .users-table td:nth-child(7) {
     display: none;
   }
-  
+
   .clubs-table th:nth-child(2),
   .clubs-table td:nth-child(2) {
     display: none;
@@ -2381,16 +2382,10 @@ select.form-input {
   .users-table td:nth-child(4) {
     display: none;
   }
-  
+
   .club-search {
     max-width: 100%;
   }
-
-  .admin-tabs {
-    overflow-x: none;
-    flex-wrap: wrap;
-    -webkit-overflow-scrolling: touch;
-    border: 1px solid red;
-  }
 }
+
 </style>
