@@ -1,120 +1,285 @@
 <template>
   <div class="admin-page">
     <main class="main">
-      <div class="page-header">
-        <div class="header-left">
-          <h1 class="page-title">Produtos</h1>
-          <p class="page-sub">48 produtos cadastrados</p>
+      <!-- Abas -->
+      <div class="admin-tabs">
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'products' }"
+          @click="activeTab = 'products'"
+        >
+          📦 Produtos
+        </button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'users' }"
+          @click="activeTab = 'users'"
+        >
+          👥 Usuários
+        </button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'clubs' }"
+          @click="activeTab = 'clubs'"
+        >
+          ⚽ Clubes
+        </button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'categories' }"
+          @click="activeTab = 'categories'"
+        >
+          🏷️ Categorias
+        </button>
+      </div>
+
+      <!-- ==================== ABA: PRODUTOS ==================== -->
+      <div v-if="activeTab === 'products'">
+        <div class="page-header">
+          <div class="header-left">
+            <h1 class="page-title">Produtos</h1>
+            <p class="page-sub">{{ pagination.total }} produtos cadastrados</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-secondary" @click="openCategoryModal">
+              <i class="ti ti-tag" aria-hidden="true" style="font-size:13px"></i>
+              Categorias
+            </button>
+            <button class="btn-primary" @click="openCreate">
+              <i class="ti ti-plus" aria-hidden="true" style="font-size:14px"></i>
+              Novo produto
+            </button>
+          </div>
         </div>
-        <div class="header-actions">
-          <button class="btn-secondary" @click="showCategoryModal = true">
-            <i class="ti ti-tag" aria-hidden="true" style="font-size:13px"></i>
-            Categorias
+
+        <div class="filters">
+          <div class="search-wrap">
+            <i class="pi pi-search search-icon" />
+            <input v-model="clubFilter" type="text" placeholder="Buscar por clube..." class="search-input"
+              @input="onFilterChange" />
+          </div>
+          <div class="type-filters">
+            <button v-for="opt in typeOptions" :key="opt.value ?? 'all'" class="type-chip"
+              :class="{ active: typeFilter === opt.value }" @click="typeFilter = opt.value; onFilterChange()">{{ opt.label
+              }}</button>
+          </div>
+          <label class="show-inactive">
+            <input type="checkbox" v-model="showInactive" @change="onFilterChange" />
+            Mostrar inativos
+          </label>
+        </div>
+
+        <div class="table-wrap">
+          <div v-if="loading" class="loading-state">
+            <ProgressSpinner strokeWidth="3" />
+          </div>
+
+          <table v-else class="products-table">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Clube</th>
+                <th>Marca</th>
+                <th>Tipo</th>
+                <th>Temporada</th>
+                <th>Preço</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in filteredProducts" :key="p.id" :class="{ 'row-inactive': !p.isActive }">
+                <td>
+                  <div class="product-cell">
+                    <img :src="p.imageUrl || placeholder" :alt="p.name" class="thumb" />
+                    <span class="product-cell-name">{{ p.name }}</span>
+                  </div>
+                </td>
+                <td v-if="p.club">{{ p.club }}</td>
+                <td v-else style="text-align: center;">-</td>
+                <td v-if="p.brand">{{ p.brand }}</td>
+                <td v-else style="text-align: center;">-</td>
+                <td v-if="p.type">
+                  <span class="type-badge" :class="p.type === 'PLAYER' ? 'badge-player' : 'badge-fan'">
+                    {{ p.type === 'PLAYER' ? 'Jogador' : 'Torcedor' }}
+                  </span>
+                </td>
+                <td v-else style="text-align: center;">
+                  <span>-</span>
+                </td>
+                <td>{{ p.season }}</td>
+                <td>{{ formatPrice(p.basePrice) }}</td>
+                <td>
+                  <span class="status-badge" :class="p.isActive ? 'status-active' : 'status-inactive'">
+                    {{ p.isActive ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button class="action-btn edit-btn" @click="openEdit(p)" title="Editar">
+                      <i class="pi pi-pencil" />
+                    </button>
+                    <button class="action-btn" :class="p.isActive ? 'deactivate-btn' : 'activate-btn'"
+                      @click="toggleActive(p)" :title="p.isActive ? 'Desativar' : 'Reativar'">
+                      <i :class="p.isActive ? 'pi pi-eye-slash' : 'pi pi-eye'" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="filteredProducts.length === 0">
+                <td colspan="8" class="empty-row">Nenhum produto encontrado</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="pagination.totalPages > 1" class="pagination">
+          <button class="page-btn" :disabled="pagination.page <= 1" @click="fetchProducts(pagination.page - 1)">
+            <i class="pi pi-chevron-left" /> Anterior
           </button>
-          <button class="btn-primary" @click="openCreate">
-            <i class="ti ti-plus" aria-hidden="true" style="font-size:14px"></i>
-            Novo produto
+          <span class="page-info">{{ pagination.page }} / {{ pagination.totalPages }}</span>
+          <button class="page-btn" :disabled="pagination.page >= pagination.totalPages"
+            @click="fetchProducts(pagination.page + 1)">
+            Próxima <i class="pi pi-chevron-right" />
           </button>
         </div>
       </div>
 
+      <!-- ==================== ABA: USUÁRIOS ==================== -->
+      <div v-if="activeTab === 'users'" class="users-section">
+        <div class="page-header">
+          <div class="header-left">
+            <h1 class="page-title">Usuários</h1>
+            <p class="page-sub">{{ users.length }} usuários cadastrados</p>
+          </div>
+        </div>
 
-      <div class="filters">
-        <div class="search-wrap">
+        <div class="table-wrap">
+          <div v-if="usersLoading" class="loading-state">
+            <ProgressSpinner strokeWidth="3" />
+          </div>
+
+          <table v-else class="users-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Time favorito</th>
+                <th>Favoritos</th>
+                <th>Telefone</th>
+                <th>Email verificado</th>
+                <th>Role</th>
+                <th>Cadastro</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="u in users" :key="u.id">
+                <td>{{ u.name }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.favorite_team || '-' }}</td>
+                <td>{{ u.wishlist_count || 0 }}</td>
+                <td>{{ u.phone || '-' }}</td>
+                <td>
+                  <span class="status-badge" :class="u.email_verified ? 'status-active' : 'status-inactive'">
+                    {{ u.email_verified ? 'Verificado' : 'Não verificado' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="role-badge" :class="u.role === 'ADMIN' ? 'badge-admin' : 'badge-user'">
+                    {{ u.role || 'CUSTOMER' }}
+                  </span>
+                </td>
+                <td>{{ formatDate(u.created_at) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ==================== ABA: CLUBES ==================== -->
+      <div v-if="activeTab === 'clubs'" class="clubs-section">
+        <div class="page-header">
+          <div class="header-left">
+            <h1 class="page-title">Clubes</h1>
+            <p class="page-sub">{{ clubsList.length }} clubes cadastrados</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-primary" @click="openClubModal">
+              <i class="ti ti-plus" aria-hidden="true"></i>
+              Novo clube
+            </button>
+          </div>
+        </div>
+
+        <div class="search-wrap club-search">
           <i class="pi pi-search search-icon" />
-          <input v-model="clubFilter" type="text" placeholder="Buscar por clube..." class="search-input"
-            @input="onFilterChange" />
+          <input v-model="clubSearch" type="text" placeholder="Buscar clube..." class="search-input" />
         </div>
-        <div class="type-filters">
-          <button v-for="opt in typeOptions" :key="opt.value ?? 'all'" class="type-chip"
-            :class="{ active: typeFilter === opt.value }" @click="typeFilter = opt.value; onFilterChange()">{{ opt.label
-            }}</button>
+
+        <div class="table-wrap">
+          <div v-if="clubsLoading" class="loading-state">
+            <ProgressSpinner strokeWidth="3" />
+          </div>
+
+          <table v-else class="clubs-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>País</th>
+                <th>Tipo</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="club in filteredClubs" :key="club.id">
+                <td>{{ club.name }}</td>
+                <td>{{ club.country || 'Brasil' }}</td>
+                <td>
+                  <span class="type-badge" :class="club.type === 'NATIONAL_TEAM' ? 'badge-national' : 'badge-club'">
+                    {{ club.type === 'NATIONAL_TEAM' ? 'Seleção' : 'Clube' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button class="action-btn edit-btn" @click="editClub(club)" title="Editar">
+                      <i class="pi pi-pencil" />
+                    </button>
+                    <button class="action-btn deactivate-btn" @click="deleteClub(club)" title="Excluir">
+                      <i class="pi pi-trash" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <label class="show-inactive">
-          <input type="checkbox" v-model="showInactive" @change="onFilterChange" />
-          Mostrar inativos
-        </label>
       </div>
 
-
-      <div class="table-wrap">
-        <div v-if="loading" class="loading-state">
-          <ProgressSpinner strokeWidth="3" />
+      <!-- ==================== ABA: CATEGORIAS ==================== -->
+      <div v-if="activeTab === 'categories'">
+        <div class="page-header">
+          <div class="header-left">
+            <h1 class="page-title">Categorias</h1>
+            <p class="page-sub">Gerencie as categorias de produtos</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-primary" @click="openCategoryModal">
+              <i class="ti ti-plus" aria-hidden="true"></i>
+              Nova categoria
+            </button>
+          </div>
         </div>
 
-        <table v-else class="products-table">
-          <thead>
-            <tr>
-              <th>Produto</th>
-              <th>Clube</th>
-              <th>Marca</th>
-              <th>Tipo</th>
-              <th>Temporada</th>
-              <th>Preço</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="p in filteredProducts" :key="p.id" :class="{ 'row-inactive': !p.isActive }">
-              <td>
-                <div class="product-cell">
-                  <img :src="p.imageUrl || placeholder" :alt="p.name" class="thumb" />
-                  <span class="product-cell-name">{{ p.name }}</span>
-                </div>
-              </td>
-              <td v-if="p.club">{{ p.club }}</td>
-              <td v-else style="text-align: center;">-</td>
-              <td v-if="p.brand">{{ p.brand }}</td>
-              <td v-else style="text-align: center;">-</td>
-              <td v-if="p.type">
-                <span class="type-badge" :class="p.type === 'PLAYER' ? 'badge-player' : 'badge-fan'">
-                  {{ p.type === 'PLAYER' ? 'Jogador' : 'Torcedor' }}
-                </span>
-              </td>
-              <td v-else style="text-align: center;">
-                <span>-</span>
-              </td>
-              <td>{{ p.season }}</td>
-              <td>{{ formatPrice(p.basePrice) }}</td>
-              <td>
-                <span class="status-badge" :class="p.isActive ? 'status-active' : 'status-inactive'">
-                  {{ p.isActive ? 'Ativo' : 'Inativo' }}
-                </span>
-              </td>
-              <td>
-                <div class="row-actions">
-                  <button class="action-btn edit-btn" @click="openEdit(p)" title="Editar">
-                    <i class="pi pi-pencil" />
-                  </button>
-                  <button class="action-btn" :class="p.isActive ? 'deactivate-btn' : 'activate-btn'"
-                    @click="toggleActive(p)" :title="p.isActive ? 'Desativar' : 'Reativar'">
-                    <i :class="p.isActive ? 'pi pi-eye-slash' : 'pi pi-eye'" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredProducts.length === 0">
-              <td colspan="8" class="empty-row">Nenhum produto encontrado</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-
-      <div v-if="pagination.totalPages > 1" class="pagination">
-        <button class="page-btn" :disabled="pagination.page <= 1" @click="fetchProducts(pagination.page - 1)">
-          <i class="pi pi-chevron-left" /> Anterior
-        </button>
-        <span class="page-info">{{ pagination.page }} / {{ pagination.totalPages }}</span>
-        <button class="page-btn" :disabled="pagination.page >= pagination.totalPages"
-          @click="fetchProducts(pagination.page + 1)">
-          Próxima <i class="pi pi-chevron-right" />
-        </button>
+        <div class="categories-list">
+          <div v-for="cat in categories" :key="cat.slug" class="category-item">
+            <span>{{ cat.icon }} {{ cat.label }}</span>
+            <span class="category-slug">{{ cat.slug }}</span>
+          </div>
+        </div>
       </div>
     </main>
 
-    <!-- Modal de Categorias -->
+    <!-- ==================== MODAL DE CATEGORIAS ==================== -->
     <div v-if="showCategoryModal" class="modal-overlay" @click="showCategoryModal = false">
       <div class="modal" @click.stop>
         <div class="modal-header">
@@ -146,7 +311,41 @@
       </div>
     </div>
 
-    <!-- Modal de Produto -->
+    <!-- ==================== MODAL DE CLUBES ==================== -->
+    <div v-if="showClubModal" class="modal-overlay" @click="showClubModal = false">
+      <div class="modal" @click.stop>
+        <div class="modal-header">
+          <h2>{{ editingClub ? 'Editar clube' : 'Novo clube' }}</h2>
+          <button class="close-btn" @click="showClubModal = false"><i class="pi pi-times" /></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nome *</label>
+            <input v-model="clubForm.name" class="form-input" placeholder="Ex: Flamengo, Brasil" />
+          </div>
+          <div class="form-group">
+            <label>País</label>
+            <input v-model="clubForm.country" class="form-input" placeholder="Ex: Brasil" />
+          </div>
+          <div class="form-group">
+            <label>Tipo</label>
+            <select v-model="clubForm.type" class="form-input">
+              <option value="CLUB">Clube</option>
+              <option value="NATIONAL_TEAM">Seleção</option>
+            </select>
+          </div>
+          <p v-if="clubError" class="error-msg">{{ clubError }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="showClubModal = false">Cancelar</button>
+          <button class="save-btn" :disabled="clubSaving" @click="saveClub">
+            {{ clubSaving ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MODAL DE PRODUTO ==================== -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
       <div class="modal">
         <div class="modal-header">
@@ -418,20 +617,40 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { user } = authStore
 
+// ==================== ESTADO GERAL ====================
+const activeTab = ref('products')
+
+// ==================== PRODUTOS ====================
 const products = ref<Product[]>([])
 const loading = ref(true)
 const pagination = ref({ page: 1, limit: 50, total: 0, totalPages: 0 })
 const clubs = ref<Club[]>([])
 const categories = ref<ProductCategoryDef[]>([])
+const clubFilter = ref('')
+const typeFilter = ref<string | undefined>(undefined)
+const showInactive = ref(true)
+
+// ==================== USUÁRIOS ====================
+const users = ref<any[]>([])
+const usersLoading = ref(false)
+
+// ==================== CLUBES ====================
+const clubsList = ref<any[]>([])
+const clubsLoading = ref(false)
+const clubSearch = ref('')
+const showClubModal = ref(false)
+const editingClub = ref<any>(null)
+const clubForm = ref({ name: '', country: 'Brasil', type: 'CLUB' })
+const clubSaving = ref(false)
+const clubError = ref('')
+
+// ==================== CATEGORIAS ====================
 const showCategoryModal = ref(false)
 const newCategory = ref({ label: '', icon: '', sortOrder: 99 })
 const savingCategory = ref(false)
 const categoryError = ref('')
 
-const clubFilter = ref('')
-const typeFilter = ref<string | undefined>(undefined)
-const showInactive = ref(true)
-
+// ==================== MODAL PRODUTO ====================
 const showModal = ref(false)
 const editingProduct = ref<Product | null>(null)
 const saving = ref(false)
@@ -444,14 +663,15 @@ const placeholder = 'https://placehold.co/60x60/0f172a/334155?text=TF'
 
 const imageUploaderRef = ref<InstanceType<typeof ImageUploader> | null>(null)
 
-const toast = useToast();
+const toast = useToast()
 
+// ==================== TIPAGEM ====================
 interface FormData {
   name: string
   club: string
   brand: string
   season: string
-  type: 'FAN' | 'PLAYER'
+  type: 'FAN' | 'PLAYER' | null
   category: string
   categorySlug: string
   gender: 'MASCULINE' | 'FEMININE' | 'UNISEX'
@@ -478,7 +698,7 @@ const emptyForm = (): FormData => ({
   club: '',
   brand: '',
   season: '',
-  type: null as 'PLAYER' | 'FAN' | null,
+  type: null,
   category: '',
   categorySlug: '',
   gender: 'UNISEX',
@@ -508,6 +728,7 @@ const typeOptions = [
   { label: 'Jogador', value: 'PLAYER' },
 ]
 
+// ==================== COMPUTED ====================
 const filteredProducts = computed(() => {
   return products.value.filter((p) => {
     if (!showInactive.value && !p.isActive) return false
@@ -515,8 +736,14 @@ const filteredProducts = computed(() => {
   })
 })
 
-const formatPrice = (cents: number) =>
-  (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const filteredClubs = computed(() => {
+  if (!clubSearch.value) return clubsList.value
+  const search = clubSearch.value.toLowerCase()
+  return clubsList.value.filter(c => 
+    c.name.toLowerCase().includes(search) ||
+    c.country?.toLowerCase().includes(search)
+  )
+})
 
 const imageUrlsArray = computed(() => {
   return imageUrlsInput.value
@@ -525,6 +752,16 @@ const imageUrlsArray = computed(() => {
     .filter(u => u.length > 0)
 })
 
+// ==================== HELPERS ====================
+const formatPrice = (cents: number) =>
+  (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+const formatDate = (date: string) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('pt-BR')
+}
+
+// ==================== WATCHERS ====================
 watch(imageUrlsInput, (val) => {
   const urls = val
     .split('\n')
@@ -565,6 +802,7 @@ watch(
   }
 )
 
+// ==================== PRODUTOS - CRUD ====================
 let debounce: ReturnType<typeof setTimeout>
 function onFilterChange() {
   clearTimeout(debounce)
@@ -597,6 +835,7 @@ async function toggleActive(p: Product) {
     life: 2500,
   })
 }
+
 function handleImageUpload(urls: string[]) {
   const existingUrls = imageUrlsInput.value
     .split('\n')
@@ -680,14 +919,13 @@ function closeModal() {
 async function saveProduct() {
   formError.value = ''
   if (!form.value.name || !form.value.season || !form.value.brand) {
-    formError.value = 'Preencha todos os campos obrigatórios (Nome, Marca e Temporada).';
+    formError.value = 'Preencha todos os campos obrigatórios (Nome, Marca e Temporada).'
     toast.add({
       severity: 'error',
       summary: 'Erro ao salvar',
       detail: formError.value || 'Tente novamente.',
       life: 4000,
     })
-
     return
   }
 
@@ -743,17 +981,20 @@ async function saveProduct() {
       if (idx !== -1) products.value[idx] = updated
       toast.add({
         severity: 'success',
-        summary: editingProduct.value ? 'Produto atualizado' : 'Produto criado',
-        detail: editingProduct.value
-          ? `${form.value.name} foi atualizado com sucesso.`
-          : `${form.value.name} foi criado com sucesso.`,
+        summary: 'Produto atualizado',
+        detail: `${form.value.name} foi atualizado com sucesso.`,
         life: 3000,
       })
     } else {
       const created = await adminService.createProduct(payload)
       products.value.unshift(created)
+      toast.add({
+        severity: 'success',
+        summary: 'Produto criado',
+        detail: `${form.value.name} foi criado com sucesso.`,
+        life: 3000,
+      })
     }
-    // closeModal()
     await fetchProducts(pagination.value.page)
   } catch (err: any) {
     toast.add({
@@ -767,6 +1008,115 @@ async function saveProduct() {
   }
 }
 
+// ==================== USUÁRIOS ====================
+async function loadUsers() {
+  usersLoading.value = true
+  try {
+    const result = await adminService.getUsers()
+    users.value = result.data
+  } catch (error) {
+    console.error('Failed to load users:', error)
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+// ==================== CLUBES ====================
+async function loadClubs() {
+  clubsLoading.value = true
+  try {
+    const result = await adminService.getClubs()
+    clubsList.value = result.data
+  } catch (error) {
+    console.error('Failed to load clubs:', error)
+  } finally {
+    clubsLoading.value = false
+  }
+}
+
+function openClubModal() {
+  editingClub.value = null
+  clubForm.value = { name: '', country: 'Brasil', type: 'CLUB' }
+  clubError.value = ''
+  showClubModal.value = true
+}
+
+function editClub(club: any) {
+  editingClub.value = club
+  clubForm.value = { 
+    name: club.name, 
+    country: club.country || 'Brasil', 
+    type: club.type || 'CLUB' 
+  }
+  clubError.value = ''
+  showClubModal.value = true
+}
+
+async function saveClub() {
+  if (!clubForm.value.name.trim()) {
+    clubError.value = 'Nome é obrigatório'
+    return
+  }
+
+  clubSaving.value = true
+  clubError.value = ''
+  try {
+    if (editingClub.value) {
+      await adminService.updateClub(editingClub.value.id, clubForm.value)
+      toast.add({
+        severity: 'success',
+        summary: 'Clube atualizado',
+        detail: `${clubForm.value.name} foi atualizado.`,
+        life: 3000,
+      })
+    } else {
+      await adminService.createClub(clubForm.value)
+      toast.add({
+        severity: 'success',
+        summary: 'Clube criado',
+        detail: `${clubForm.value.name} foi adicionado.`,
+        life: 3000,
+      })
+    }
+    await loadClubs()
+    showClubModal.value = false
+  } catch (err: any) {
+    clubError.value = err.response?.data?.message || 'Erro ao salvar clube'
+    toast.add({
+      severity: 'error',
+      summary: 'Erro',
+      detail: clubError.value,
+      life: 4000,
+    })
+  } finally {
+    clubSaving.value = false
+  }
+}
+
+async function deleteClub(club: any) {
+  if (!confirm(`Tem certeza que deseja excluir o clube "${club.name}"?`)) return
+  
+  try {
+    await adminService.deleteClub(club.id)
+    await loadClubs()
+    toast.add({
+      severity: 'success',
+      summary: 'Clube excluído',
+      detail: `${club.name} foi removido.`,
+      life: 3000,
+    })
+  } catch (err: any) {
+    const msg = err.response?.data?.message || 'Erro ao excluir clube'
+    toast.add({
+      severity: 'error',
+      summary: 'Erro',
+      detail: msg,
+      life: 4000,
+    })
+  }
+}
+
+// ==================== CATEGORIAS ====================
 async function saveNewCategory() {
   if (!newCategory.value.label.trim()) {
     categoryError.value = 'Nome é obrigatório'
@@ -788,7 +1138,6 @@ async function saveNewCategory() {
     })
   } catch (err: any) {
     categoryError.value = err.response?.data?.message || 'Erro ao criar categoria'
-
     toast.add({
       severity: 'error',
       summary: 'Erro ao salvar',
@@ -800,11 +1149,11 @@ async function saveNewCategory() {
   }
 }
 
-async function handleLogout() {
-  await authStore.logout()
-  router.push('/login')
+function openCategoryModal() {
+  showCategoryModal.value = true
 }
 
+// ==================== UTILS ====================
 function normalizeImageUrls(images: any): string[] {
   if (Array.isArray(images)) return images
   if (typeof images === 'string') {
@@ -840,11 +1189,19 @@ async function loadCategories() {
   }
 }
 
+async function handleLogout() {
+  await authStore.logout()
+  router.push('/login')
+}
+
+// ==================== MOUNTED ====================
 onMounted(async () => {
   await Promise.all([
     fetchProducts(),
     clubsService.list().then((c) => { clubs.value = c }),
     loadCategories(),
+    loadUsers(),
+    loadClubs(),
   ])
 })
 </script>
@@ -1829,6 +2186,203 @@ select.form-input {
   .products-table th:nth-child(5),
   .products-table td:nth-child(5) {
     display: none;
+  }
+}
+
+/* ==================== ABAS PRINCIPAIS ==================== */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+}
+
+/* ==================== TABELA DE USUÁRIOS ==================== */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table thead tr {
+  background: #1c2330;
+}
+
+.users-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: #484f58;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid #2d3748;
+  white-space: nowrap;
+}
+
+.users-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #1e2d3d;
+  font-size: 13px;
+  color: #8b949e;
+  vertical-align: middle;
+}
+
+.users-table tr:last-child td {
+  border-bottom: none;
+}
+
+.users-table tbody tr:hover td {
+  background: #222a38;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.badge-admin {
+  background: #1f1635;
+  border: 1px solid #3d2b75;
+  color: #a371f7;
+}
+
+.badge-user {
+  background: #0a2522;
+  border: 1px solid #0e3d38;
+  color: #3fb950;
+}
+
+/* ==================== TABELA DE CLUBES ==================== */
+.clubs-section .page-header {
+  margin-bottom: 16px;
+}
+
+.club-search {
+  max-width: 300px;
+  margin-bottom: 20px;
+}
+
+.clubs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.clubs-table thead tr {
+  background: #1c2330;
+}
+
+.clubs-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: #484f58;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid #2d3748;
+  white-space: nowrap;
+}
+
+.clubs-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #1e2d3d;
+  font-size: 13px;
+  color: #8b949e;
+  vertical-align: middle;
+}
+
+.clubs-table tr:last-child td {
+  border-bottom: none;
+}
+
+.clubs-table tbody tr:hover td {
+  background: #222a38;
+}
+
+.badge-club {
+  background: #0d2240;
+  border: 1px solid #1f4280;
+  color: #388bfd;
+}
+
+.badge-national {
+  background: #1f1635;
+  border: 1px solid #3d2b75;
+  color: #a371f7;
+}
+
+/* ==================== MODAL DE CLUBES ==================== */
+#clubModal .modal {
+  max-width: 500px;
+}
+
+/* ==================== AJUSTES RESPONSIVOS ==================== */
+@media (max-width: 768px) {
+  .admin-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .tab-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  
+  .users-table th:nth-child(5),
+  .users-table td:nth-child(5),
+  .users-table th:nth-child(6),
+  .users-table td:nth-child(6),
+  .users-table th:nth-child(7),
+  .users-table td:nth-child(7) {
+    display: none;
+  }
+  
+  .clubs-table th:nth-child(2),
+  .clubs-table td:nth-child(2) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .users-table th:nth-child(4),
+  .users-table td:nth-child(4) {
+    display: none;
+  }
+  
+  .club-search {
+    max-width: 100%;
   }
 }
 </style>

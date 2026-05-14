@@ -62,7 +62,6 @@ export const adminService = {
 
   async updateProduct(id: string, input: UpdateProductInput): Promise<Product> {
     try {
-      // Normalizar stockBySize se vier como string
       let stockBySize = input.stockBySize;
       if (typeof stockBySize === "string") {
         try {
@@ -74,7 +73,7 @@ export const adminService = {
 
       const payload: any = {
         ...input,
-        stockBySize, // garante que é object, não string
+        stockBySize,
       };
 
       const { data } = await api.patch<{ data: Product }>(
@@ -90,6 +89,30 @@ export const adminService = {
 
   async deleteProduct(id: string): Promise<void> {
     await api.delete(`/admin/products/${id}`);
+  },
+
+  async getUsers(): Promise<{ data: any[] }> {
+    const { data } = await api.get<{ data: any[] }>("/admin/users");
+    return data;
+  },
+
+  async getClubs(params?: { search?: string }): Promise<{ data: any[] }> {
+    const { data } = await api.get<{ data: any[] }>("/admin/clubs", { params });
+    return data;
+  },
+
+  async createClub(input: { name: string; country?: string; type?: string }): Promise<{ data: any }> {
+    const { data } = await api.post<{ data: any }>("/admin/clubs", input);
+    return data;
+  },
+
+  async updateClub(id: string, input: { name?: string; country?: string; type?: string }): Promise<{ data: any }> {
+    const { data } = await api.patch<{ data: any }>(`/admin/clubs/${id}`, input);
+    return data;
+  },
+
+  async deleteClub(id: string): Promise<void> {
+    await api.delete(`/admin/clubs/${id}`);
   },
 
   async listUsers(): Promise<any[]> {

@@ -27,26 +27,53 @@
         <div class="section-divider" />
       </section>
 
-      <div class="toolbar" style="align-items: flex-start;">
-
+      <div class="toolbar" style="border-radius: 10px; padding: 0.5%;background-color: #080b0f;" >
+        <div style=" display: flex; flex-direction: column; justify-content: space-between; gap: 1.5vh">
           <div class="search-wrap">
             <i class="pi pi-search search-icon" />
-            <input v-model="searchText" type="text" placeholder="Buscar por título de produto..." class="search-input"
+            <input v-model="searchText" type="text" placeholder="Buscar por título, marca, título..." class="search-input"
               @input="onSearchInput" />
             <button v-if="searchText" class="clear-btn" @click="searchText = ''; fetchProducts(1, true)"><i
                 class="pi pi-times" /></button>
           </div>
+          <!-- Filtro de preço -->
+          <div class="price-filter">
+            <input 
+              v-model.number="minPrice" 
+              type="number" 
+              placeholder="Min R$" 
+              class="price-input"
+              @input="onPriceInput"
+            />
+            <span class="price-sep">-</span>
+            <input 
+              v-model.number="maxPrice" 
+              type="number" 
+              placeholder="Max R$" 
+              class="price-input"
+              @input="onPriceInput"
+            />
+            <button v-if="minPrice || maxPrice" class="clear-price-btn" @click="clearPriceFilter">
+              <i class="pi pi-times" />
+            </button>
+          </div>
+
+        </div>
         <!-- Filtros agrupados -->
         <div class="filters-group" style="flex-wrap: wrap;">
-          <!-- Busca por clube/marca -->
-
+          <button class="clear-filters-btn" @click="clearAllFilters">
+            <i class="pi pi-trash" /> Limpar
+          </button>
           <!-- Dropdown de filtros -->
-          <div class="filter-dropdowns">
+            <select v-model="clubFilter" class="filter-select" @change="fetchProducts(1, true)">
+              <option :value="undefined">Todos os clubes</option>
+              <option v-for="club in availableClubs" :key="club" :value="club">{{ club }}</option>
+            </select>
+
             <select v-model="brandFilter" class="filter-select" @change="fetchProducts(1, true)">
               <option :value="undefined">Todas as marcas</option>
               <option v-for="brand in availableBrands" :key="brand" :value="brand">{{ brand }}</option>
             </select>
-
             <select v-model="typeFilter" class="filter-select" @change="fetchProducts(1, true)">
               <option :value="undefined">Todos os tipos</option>
               <option value="FAN">Torcedor</option>
@@ -100,35 +127,6 @@
               }}</span>
             </button>
           </div>
-
-
-
-          <!-- Filtro de preço -->
-          <div class="price-filter">
-            <input 
-              v-model.number="minPrice" 
-              type="number" 
-              placeholder="Min R$" 
-              class="price-input"
-              @input="onPriceInput"
-            />
-            <span class="price-sep">-</span>
-            <input 
-              v-model.number="maxPrice" 
-              type="number" 
-              placeholder="Max R$" 
-              class="price-input"
-              @input="onPriceInput"
-            />
-            <button v-if="minPrice || maxPrice" class="clear-price-btn" @click="clearPriceFilter">
-              <i class="pi pi-times" />
-            </button>
-          </div>
-
-          <button class="clear-filters-btn" @click="clearAllFilters">
-          <i class="pi pi-trash" /> Limpar
-        </button>
-        </div>
       </div>
         
 
