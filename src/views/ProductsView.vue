@@ -27,7 +27,7 @@
         <div class="section-divider" />
       </section>
 
-      <div class="toolbar" style="border-radius: 10px; padding: 0.5%;background-color: #080b0f;" >
+      <div class="toolbar" style="border-radius: 10px; padding: 1%;background-color: #080b0f;" >
         <div style=" display: flex; flex-direction: column; justify-content: space-between; gap: 1.5vh">
           <div class="search-wrap">
             <i class="pi pi-search search-icon" />
