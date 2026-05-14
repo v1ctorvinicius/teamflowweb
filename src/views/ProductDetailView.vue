@@ -13,7 +13,6 @@
             <div v-if="product.isFeatured" class="badge-featured">⭐ Destaque</div>
           </div>
 
-
           <div v-if="product.imageUrls.length > 1" class="thumbnails">
             <button v-for="(url, idx) in product.imageUrls" :key="idx" class="thumbnail"
               :class="{ active: selectedImageIdx === idx }" @click="selectedImageIdx = idx">
@@ -22,12 +21,26 @@
           </div>
         </div>
 
-
         <div class="info-section">
           <div class="header">
             <h1 class="name">{{ product.name }}</h1>
             <p class="club">{{ product.club }}</p>
             <p class="season">Temporada {{ product.season }}</p>
+          </div>
+
+          <div class="badges-row">
+            <span v-if="product.brand" class="badge badge--brand">
+              {{ product.brand.toUpperCase() }}
+            </span>
+            <span class="badge" :class="getGenderBadgeClass(product.gender)">
+              {{ getGenderLabel(product.gender) }}
+            </span>
+            <span v-if="product.allowPersonalization" class="badge badge--custom">
+              ✏️ Personalizável
+            </span>
+            <span v-if="product.type" class="badge" :class="product.type === 'PLAYER' ? 'badge--player' : 'badge--fan'">
+              {{ product.type === 'PLAYER' ? 'Jogador' : 'Torcedor' }}
+            </span>
           </div>
 
           <div class="wishlist-row">
@@ -47,38 +60,36 @@
             <span v-if="hasCustomization" class="customization-price">+ R$ 49,90 (personalização)</span>
           </div>
 
-
           <div class="size-section">
             <label class="label">
               {{ product.enableCategoricalSizes ? product.categoricalSizesLabel : product.numericSizesLabel }}
             </label>
 
-
             <div v-if="product.enableCategoricalSizes" class="size-selector">
               <button v-for="size in product.stockCategorical" :key="size" class="size-btn"
-                :class="{ active: selectedSize === size }" :disabled="(product.stockCategoricalBySize[size] ?? 0) === 0"
+                :class="{ active: selectedSize === size }"
+                :disabled="!product.infiniteStock && (product.stockCategoricalBySize[size] ?? 0) === 0"
                 @click="selectedSize = size">
                 {{ size }}
               </button>
             </div>
-
 
             <div v-else-if="product.enableNumericSizes" class="size-selector">
               <button v-for="size in numericSizesArray" :key="size" class="size-btn"
-                :class="{ active: selectedSize === size }" :disabled="(product.stockNumeric[size] ?? 0) === 0"
+                :class="{ active: selectedSize === size }"
+                :disabled="!product.infiniteStock && (product.stockNumeric[size] ?? 0) === 0"
                 @click="selectedSize = size">
                 {{ size }}
               </button>
             </div>
-
 
             <div v-else class="no-sizes">
               <p>Tamanhos não disponíveis</p>
             </div>
           </div>
 
-
-          <div class="customization-section">
+          <!-- 🔥 Personalização (só se permitido) -->
+          <div v-if="product.allowPersonalization" class="customization-section">
             <label class="label">Personalização (opcional)</label>
             <div class="customization-grid">
               <div class="custom-field">
@@ -101,19 +112,16 @@
             </div>
           </div>
 
-
           <div v-if="product.description" class="description-section">
             <label class="label">Descrição</label>
             <p class="description">{{ product.description }}</p>
           </div>
-
 
           <div class="actions">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer" class="whatsapp-btn-lg">
               <i class="pi pi-send" />
               Comprar via WhatsApp
             </a>
-
 
             <button class="share-btn" @click="handleShare">
               <i class="pi pi-share-alt" />
@@ -158,11 +166,11 @@ const shareToast = ref('')
 const customName = ref('')
 const customNumber = ref<number | null>(null)
 
-
 const isWishlisted = ref(false)
 const wishlistLoading = ref(false)
 
 const hasCustomization = computed(() => !!customName.value || !!customNumber.value)
+
 const finalPrice = computed(() => {
   if (!product.value) return 0
   return product.value.basePrice + (hasCustomization.value ? CUSTOMIZATION_PRICE : 0)
@@ -179,6 +187,23 @@ const numericSizesArray = computed<string[]>(() =>
 const formatPrice = (cents: number) =>
   (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+// 🔥 Funções para gênero
+function getGenderLabel(gender: string): string {
+  switch (gender) {
+    case 'MASCULINE': return '♂ Masculino'
+    case 'FEMININE': return '♀ Feminino'
+    default: return '👥 Unissex'
+  }
+}
+
+function getGenderBadgeClass(gender: string): string {
+  switch (gender) {
+    case 'MASCULINE': return 'badge--masculine'
+    case 'FEMININE': return 'badge--feminine'
+    default: return 'badge--unisex'
+  }
+}
+
 const getStock = (size: string): number => {
   if (!product.value) return 0
   if (product.value.enableCategoricalSizes) {
@@ -189,13 +214,21 @@ const getStock = (size: string): number => {
   return 0
 }
 
+// 🔥 Respeita infiniteStock
+const hasStock = computed(() => {
+  if (product.value?.infiniteStock) return true
+  return selectedSize.value && getStock(selectedSize.value) > 0
+})
+
+const isOutOfStock = computed(() => {
+  if (product.value?.infiniteStock) return false
+  return !selectedSize.value || getStock(selectedSize.value) === 0
+})
+
 const whatsappUrl = computed(() => {
   if (!product.value) {
     return `https://wa.me/${WHATSAPP_NUMBER}`
   }
-
-  const hasStock = selectedSize.value && getStock(selectedSize.value) > 0
-  const isOutOfStock = !selectedSize.value || getStock(selectedSize.value) === 0
 
   let msg = ''
 
@@ -206,14 +239,14 @@ const whatsappUrl = computed(() => {
     customizationLine = `\n*Personalização:* ${[namePart, numberPart].filter(Boolean).join(' | ')}`
   }
 
-  if (hasStock) {
+  if (hasStock.value) {
     msg = `Olá! Tenho interesse no produto:\n\n` +
       `*${product.value.name}*\n` +
       `Time: ${product.value.club} | Temporada: ${product.value.season}\n` +
       `Tamanho: ${selectedSize.value}${customizationLine}\n` +
       `Preço: ${formatPrice(finalPrice.value)}\n\n` +
       `Poderia me dar mais informações?`
-  } else if (isOutOfStock) {
+  } else if (isOutOfStock.value) {
     const requestedSize = selectedSize.value || 'não especificado'
     msg = `Olá! Gostaria de saber sobre disponibilidade futura:\n\n` +
       `*${product.value.name}*\n` +
@@ -310,20 +343,18 @@ onMounted(async () => {
 
     product.value = rawProduct
 
-
     if (product.value && authStore.isAuthenticated) {
       await checkWishlistStatus()
     }
 
-
     if (product.value.enableCategoricalSizes && product.value.stockCategorical.length > 0) {
       const availableSize = product.value.stockCategorical.find(
-        size => (product.value!.stockCategoricalBySize[size] ?? 0) > 0
+        size => product.value!.infiniteStock || (product.value!.stockCategoricalBySize[size] ?? 0) > 0
       )
       if (availableSize) selectedSize.value = availableSize
     } else if (product.value.enableNumericSizes && Object.keys(product.value.stockNumeric).length > 0) {
       const availableSize = Object.keys(product.value.stockNumeric).find(
-        size => (product.value!.stockNumeric[size] ?? 0) > 0
+        size => product.value!.infiniteStock || (product.value!.stockNumeric[size] ?? 0) > 0
       )
       if (availableSize) selectedSize.value = availableSize
     }
@@ -341,53 +372,6 @@ onMounted(async () => {
   min-height: 100vh;
   background: #0d1117;
   color: #f0f6fc;
-}
-
-/* ── Navbar ──────────────────────────────────────────────── */
-.navbar {
-  background: #161b22;
-  border-bottom: 1px solid #2d3748;
-  height: 52px;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-.navbar-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 20px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.back-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #8b949e;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.back-link:hover {
-  color: #f0f6fc;
-}
-
-.brand {
-  flex: 1;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: #f0f6fc;
-}
-
-.spacer {
-  width: 72px;
 }
 
 /* ── Layout ──────────────────────────────────────────────── */
@@ -492,7 +476,6 @@ onMounted(async () => {
   gap: 16px;
 }
 
-/* Header — sem fundo, respira */
 .name {
   font-size: 20px;
   font-weight: 700;
@@ -516,8 +499,112 @@ onMounted(async () => {
   margin: 0;
 }
 
+/* ── Badges ───────────────────────────────────────────────── */
+.badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.badge--player {
+  background: #0d2240;
+  border: 1px solid #1f4280;
+  color: #388bfd;
+}
+
+.badge--fan {
+  background: #0a2522;
+  border: 1px solid #0e3d38;
+  color: #3fb950;
+}
+
+.badge--masculine {
+  background: #0d2240;
+  border: 1px solid #1f4280;
+  color: #388bfd;
+}
+
+.badge--feminine {
+  background: #2a0f0e;
+  border: 1px solid #5a1a18;
+  color: #ffa19c;
+}
+
+.badge--unisex {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #94a3b8;
+}
+
+.badge--custom {
+  background: #1f1635;
+  border: 1px solid #3d2b75;
+  color: #a371f7;
+}
+
+.badge--brand {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+}
+/* ── Wishlist ─────────────────────────────────────────────── */
+.wishlist-row {
+  margin-bottom: 4px;
+}
+
+.wishlist-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #2d3748;
+  border-radius: 10px;
+  color: #8b949e;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.wishlist-btn:hover {
+  border-color: #3d4f68;
+  color: #f0f6fc;
+}
+
+.wishlist-btn.is-wishlisted {
+  background: #2a0f0e;
+  border-color: #5a1a18;
+  color: #ffa19c;
+}
+
+.wishlist-btn.is-wishlisted:hover {
+  background: #3a1513;
+}
+
+.wishlist-btn i {
+  font-size: 16px;
+}
+
+.wishlist-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Bloco compartilhado ─────────────────────────────────── */
-/* Aplique .block em price-section, size-section, customization-section, description-section */
 .price-section,
 .size-section,
 .customization-section,
@@ -746,52 +833,6 @@ onMounted(async () => {
   padding: 4px 0;
 }
 
-/* ── Wishlist ─────────────────────────────────────────────── */
-.wishlist-row {
-  margin-bottom: 4px;
-}
-
-.wishlist-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px;
-  background: transparent;
-  border: 1px solid #2d3748;
-  border-radius: 10px;
-  color: #8b949e;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.wishlist-btn:hover {
-  border-color: #3d4f68;
-  color: #f0f6fc;
-}
-
-.wishlist-btn.is-wishlisted {
-  background: #2a0f0e;
-  border-color: #5a1a18;
-  color: #ffa19c;
-}
-
-.wishlist-btn.is-wishlisted:hover {
-  background: #3a1513;
-}
-
-.wishlist-btn i {
-  font-size: 16px;
-}
-
-.wishlist-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* ── Not found ───────────────────────────────────────────── */
 .not-found {
   text-align: center;
@@ -804,13 +845,8 @@ onMounted(async () => {
   margin-bottom: 20px;
 }
 
-/* ── 640px+ ──────────────────────────────────────────────── */
+/* ── Responsivo ──────────────────────────────────────────────── */
 @media (min-width: 640px) {
-  .navbar-inner {
-    padding: 0 24px;
-    height: 56px;
-  }
-
   .main {
     padding: 28px 24px 56px;
   }
@@ -842,7 +878,6 @@ onMounted(async () => {
   }
 }
 
-/* ── 1024px+ ─────────────────────────────────────────────── */
 @media (min-width: 1024px) {
   .main {
     padding: 36px 32px 64px;
@@ -861,12 +896,7 @@ onMounted(async () => {
   }
 }
 
-/* ── 380px ───────────────────────────────────────────────── */
 @media (max-width: 380px) {
-  .navbar-inner {
-    padding: 0 12px;
-  }
-
   .main {
     padding: 14px 12px 40px;
   }
