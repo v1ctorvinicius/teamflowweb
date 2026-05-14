@@ -23,25 +23,43 @@
       </section>
 
       <div class="toolbar">
-        <div class="toolbar-left">
-          <h1 class="page-title">Camisetas</h1>
+        <div class="toolbar-left" >
+          <h1 class="page-title">Produtos</h1>
           <span v-if="!loading" class="product-count">{{ pagination.total }} produto{{ pagination.total !== 1 ? 's' : ''
           }}</span>
         </div>
-        <div class="filters">
+
+        <!-- Filtros agrupados -->
+        <div class="filters-group">
+          <!-- Busca por clube/marca -->
           <div class="search-wrap">
             <i class="pi pi-search search-icon" />
-            <input v-model="clubFilter" type="text" placeholder="Buscar por clube..." class="search-input"
-              @input="onClubInput" />
-            <button v-if="clubFilter" class="clear-btn" @click="clubFilter = ''; fetchProducts(1, true)"><i
+            <input v-model="searchText" type="text" placeholder="Buscar por clube ou marca..." class="search-input"
+              @input="onSearchInput" />
+            <button v-if="searchText" class="clear-btn" @click="searchText = ''; fetchProducts(1, true)"><i
                 class="pi pi-times" /></button>
           </div>
-          <div class="type-filters">
-            <button v-for="opt in typeOptions" :key="opt.value ?? 'all'" class="type-chip"
-              :class="{ active: typeFilter === opt.value }" @click="typeFilter = opt.value; fetchProducts(1, true)">{{
-                opt.label }}</button>
-          </div>
-          <div class="my-team-wrap" :title="!isAuthenticated ? 'Crie uma conta para usar este filtro' : ''">
+
+          <!-- Dropdown de filtros -->
+          <div class="filter-dropdowns">
+            <select v-model="typeFilter" class="filter-select" @change="fetchProducts(1, true)">
+              <option :value="undefined">Todos os tipos</option>
+              <option value="FAN">Torcedor</option>
+              <option value="PLAYER">Jogador</option>
+            </select>
+
+            <select v-model="genderFilter" class="filter-select" @change="fetchProducts(1, true)">
+              <option :value="undefined">Todos os gêneros</option>
+              <option value="MASCULINE">♂ Masculino</option>
+              <option value="FEMININE">♀ Feminino</option>
+              <option value="UNISEX">👥 Unissex</option>
+            </select>
+
+            <select v-model="viewMode" class="filter-select view-select">
+              <option value="list">Todos os produtos</option>
+              <option value="sections">Por categoria</option>
+            </select>
+
             <button class="type-chip my-team-btn" :class="{ active: myTeamFilter, 'chip-disabled': !isAuthenticated }"
               :disabled="!isAuthenticated" @click="toggleMyTeamFilter">
               ⭐ Meu time
@@ -52,24 +70,14 @@
         </div>
       </div>
 
-      <!-- Toggle de visualização -->
-      <div class="view-toggle">
-        <button class="type-chip" :class="{ active: viewMode === 'sections' }" @click="viewMode = 'sections'">
-          Por categoria
-        </button>
-        <button class="type-chip" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">
-          Todos os produtos
-        </button>
-      </div>
-
-      <!-- MODO SEÇÕES -->
-      <template v-if="viewMode === 'sections' && !clubFilter && !typeFilter && !myTeamFilter">
+      <!-- MODO SEÇÕES (apenas quando viewMode = sections e sem filtros ativos) -->
+      <template v-if="viewMode === 'sections' && !searchText && !typeFilter && !genderFilter && !myTeamFilter">
         <template v-for="cat in categories" :key="cat.slug">
           <section v-if="productsByCategory[cat.slug]?.length" class="category-section">
             <div class="section-header">
               <h2 class="section-title">{{ cat.icon }} {{ cat.label }}</h2>
               <button class="see-all-btn"
-                @click="viewMode = 'list'; typeFilter = undefined; clubFilter = ''; fetchProducts(1, true)">
+                @click="viewMode = 'list'; typeFilter = undefined; genderFilter = undefined; searchText = ''; fetchProducts(1, true)">
                 Ver todos →
               </button>
             </div>
@@ -84,14 +92,13 @@
           </section>
         </template>
 
-        <!-- Se não tiver produtos em nenhuma categoria -->
         <div v-if="!Object.keys(productsByCategory).length" class="empty-state">
           <span class="empty-icon">👕</span>
           <p class="empty-title">Nenhum produto cadastrado ainda</p>
         </div>
       </template>
 
-      <!-- MODO LISTA (filtros ativos ou toggle "Todos") -->
+      <!-- MODO LISTA -->
       <template v-else>
         <div v-if="loading" class="loading-state">
           <ProgressSpinner strokeWidth="3" />
@@ -148,8 +155,11 @@ const products = ref<Product[]>([])
 const featured = ref<Product[]>([])
 const loading = ref(true)
 const pagination = ref({ page: 1, limit: 20, total: 0, totalPages: 0 })
-const clubFilter = ref('')
+
+// Filtros unificados
+const searchText = ref('')
 const typeFilter = ref<'PLAYER' | 'FAN' | undefined>(undefined)
+const genderFilter = ref<'MASCULINE' | 'FEMININE' | 'UNISEX' | undefined>(undefined)
 const myTeamFilter = ref(false)
 const myTeamCount = ref(0)
 
@@ -157,15 +167,9 @@ const categories = ref<ProductCategoryDef[]>([])
 const productsByCategory = ref<Record<string, Product[]>>({})
 const viewMode = ref<'sections' | 'list'>('sections')
 
-const typeOptions = [
-  { label: 'Todos', value: undefined },
-  { label: 'Torcedor', value: 'FAN' as const },
-  { label: 'Jogador', value: 'PLAYER' as const },
-]
-
 let debounceTimer: ReturnType<typeof setTimeout>
 
-function onClubInput() {
+function onSearchInput() {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
     if (myTeamFilter.value) myTeamFilter.value = false
@@ -176,7 +180,7 @@ function onClubInput() {
 function toggleMyTeamFilter() {
   if (!isAuthenticated.value) return
   myTeamFilter.value = !myTeamFilter.value
-  if (myTeamFilter.value) clubFilter.value = ''
+  if (myTeamFilter.value) searchText.value = ''
   fetchProducts(1, true)
 }
 
@@ -184,14 +188,19 @@ async function fetchProducts(page = 1, reset = false) {
   if (reset) loading.value = true
   try {
     const filters: Record<string, any> = { page, limit: 20 }
+    
     if (typeFilter.value) filters.type = typeFilter.value
+    if (genderFilter.value) filters.gender = genderFilter.value
+    
     if (myTeamFilter.value && user.value?.favoriteTeam) {
       filters.club = user.value.favoriteTeam
-    } else if (clubFilter.value.trim()) {
-      filters.club = clubFilter.value.trim()
+    } else if (searchText.value.trim()) {
+      // Busca por clube ou marca
+      filters.club = searchText.value.trim()
+      filters.brand = searchText.value.trim()
     }
+    
     const response = await productsService.list(filters)
-    console.log('🔍 Produtos carregados:', response.data[0])
     products.value = response.data
     pagination.value = response.pagination
   } catch (error) {
@@ -210,7 +219,10 @@ async function fetchMyTeamCount() {
 }
 
 function resetFilters() {
-  clubFilter.value = ''; typeFilter.value = undefined; myTeamFilter.value = false
+  searchText.value = ''
+  typeFilter.value = undefined
+  genderFilter.value = undefined
+  myTeamFilter.value = false
   fetchProducts(1, true)
 }
 
@@ -547,6 +559,7 @@ body {
 .toolbar-left {
   display: flex;
   align-items: baseline;
+  flex-direction: column;
   gap: 10px
 }
 
@@ -1111,5 +1124,109 @@ body {
   .products-grid {
     gap: 10px
   }
+}
+
+/* ── Estilos adicionais para filtros agrupados ────────────────────────────── */
+
+/* Grupo de filtros */
+.filters-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Dropdowns container */
+.filter-dropdowns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-select {
+  height: 36px;
+  padding: 0 32px 0 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.filter-select:hover {
+  border-color: #3d4f68;
+  color: var(--text-primary);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.view-select {
+  min-width: 140px;
+}
+
+/* Ajuste da toolbar para mobile */
+@media (min-width: 768px) {
+  .filters-group {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  
+  .search-wrap {
+    min-width: 240px;
+  }
+  
+  .filter-dropdowns {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .filter-dropdowns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .my-team-btn {
+    justify-content: center;
+  }
+}
+
+.category-section {
+  margin-bottom: 8px;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.see-all-btn {
+  font-size: 12px;
+  color: #60a5fa;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.see-all-btn:hover {
+  color: #93c5fd;
 }
 </style>
