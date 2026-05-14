@@ -2350,7 +2350,7 @@ select.form-input {
 @media (max-width: 768px) {
   .admin-tabs {
     overflow-x: auto;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     -webkit-overflow-scrolling: touch;
   }
   
@@ -2383,6 +2383,12 @@ select.form-input {
   
   .club-search {
     max-width: 100%;
+  }
+
+  .admin-tabs {
+    overflow-x: auto;
+    flex-direction: column;
+    -webkit-overflow-scrolling: touch;
   }
 }
 </style>
