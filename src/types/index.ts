@@ -104,6 +104,7 @@ export interface ProductsResponse {
 }
 
 export interface ProductFilters {
+  search?: string;
   club?: string;
   brand?: string;
   gender?: ProductGender;

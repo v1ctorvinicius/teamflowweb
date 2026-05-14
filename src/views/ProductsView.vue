@@ -31,7 +31,7 @@
 
           <div class="search-wrap">
             <i class="pi pi-search search-icon" />
-            <input v-model="searchText" type="text" placeholder="Buscar por clube ou marca..." class="search-input"
+            <input v-model="searchText" type="text" placeholder="Buscar por título de produto..." class="search-input"
               @input="onSearchInput" />
             <button v-if="searchText" class="clear-btn" @click="searchText = ''; fetchProducts(1, true)"><i
                 class="pi pi-times" /></button>
@@ -311,8 +311,7 @@ async function fetchProducts(page = 1, reset = false) {
     if (myTeamFilter.value && user.value?.favoriteTeam) {
       filters.club = user.value.favoriteTeam
     } else if (searchText.value.trim()) {
-      filters.club = searchText.value.trim()
-      filters.brand = searchText.value.trim()
+      filters.search = searchText.value.trim()
     }
     
     const response = await productsService.list(filters)
