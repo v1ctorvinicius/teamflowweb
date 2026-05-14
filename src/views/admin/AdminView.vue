@@ -2350,7 +2350,7 @@ select.form-input {
 @media (max-width: 768px) {
   .admin-tabs {
     overflow-x: auto;
-    flex-wrap: wrap;
+    flex-direction: column;
     -webkit-overflow-scrolling: touch;
   }
   
