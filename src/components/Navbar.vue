@@ -20,6 +20,12 @@
           <router-link v-if="isAdmin" to="/admin" class="admin-lnk">
             <i class="pi pi-cog" style="font-size: 13px"></i> Admin
           </router-link>
+
+          <router-link to="/notificacoes" class="notif-lnk">
+            <i class="pi pi-bell" style="font-size: 14px"></i>
+            <span v-if="unreadCount > 0" class="notif-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+          </router-link>
+
           <router-link to="/account" class="account-lnk">
             <i class="pi pi-user" style="font-size: 13px"></i> {{ user?.name?.split(' ')[0] || 'Conta' }}
           </router-link>
@@ -52,7 +58,7 @@
         </div>
         <div>
           <p class="drawer-username">{{ user?.name || 'Visitante' }}</p>
-          <p class="drawer-email">{{ user?.email || 'Faça login para continuar' }}</p>
+          <p class="drawer-email">@{{ user?.username || 'Faça login para continuar' }}</p>
         </div>
       </div>
 
@@ -60,6 +66,13 @@
         <router-link to="/" class="drawer-item" @click="drawerOpen = false">
           <i class="pi pi-home" aria-hidden="true"></i> Início
         </router-link>
+
+        <!-- 🔥 Link para notificações no drawer -->
+        <router-link to="/notificacoes" class="drawer-item" @click="drawerOpen = false">
+          <i class="pi pi-bell" aria-hidden="true"></i> Notificações
+          <span v-if="unreadCount > 0" class="drawer-notif-badge">{{ unreadCount }}</span>
+        </router-link>
+
         <router-link to="/account" class="drawer-item drawer-item--primary" @click="drawerOpen = false">
           <i class="pi pi-user" aria-hidden="true"></i> Minha conta
         </router-link>
@@ -87,16 +100,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
+import { notificationsService } from '@/services/notifications'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { user, isAuthenticated } = storeToRefs(authStore)
 
 const drawerOpen = ref(false)
+const unreadCount = ref(0)
+let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 const isAdmin = computed(() => (user.value as any)?.role === 'ADMIN')
 const userInitials = computed(() => {
@@ -108,6 +125,15 @@ const userInitials = computed(() => {
     .slice(0, 2)
     .toUpperCase()
 })
+
+async function fetchUnreadCount() {
+  if (!isAuthenticated.value) return
+  try {
+    unreadCount.value = await notificationsService.getUnreadCount()
+  } catch (error) {
+    console.error('Failed to fetch unread count:', error)
+  }
+}
 
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value
@@ -123,7 +149,38 @@ async function handleDrawerLogout() {
   await authStore.logout()
   router.push('/login')
 }
+
+watch(isAuthenticated, (authenticated) => {
+  if (authenticated) {
+    fetchUnreadCount()
+  } else {
+    unreadCount.value = 0
+  }
+})
+
+watch(() => route.path, (newPath, oldPath) => {
+  if (oldPath === '/notificacoes' && newPath !== '/notificacoes') {
+    fetchUnreadCount()
+  }
+})
+
+onMounted(() => {
+  fetchUnreadCount()
+
+  refreshInterval = setInterval(() => {
+    if (isAuthenticated.value) {
+      fetchUnreadCount()
+    }
+  }, 20000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+})
 </script>
+
 
 <style scoped>
 /* ── Navbar ──────────────────────────────────────────────── */
@@ -445,5 +502,63 @@ async function handleDrawerLogout() {
   .team-pill {
     max-width: none;
   }
+}
+
+.notif-lnk {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.notif-lnk:hover {
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #f43f5e;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawer-notif-badge {
+  background: #f43f5e;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+/* Ajuste para o drawer-user mostrar username */
+.drawer-email {
+  font-size: 11px;
+  color: #60a5fa;
+  font-family: monospace;
 }
 </style>

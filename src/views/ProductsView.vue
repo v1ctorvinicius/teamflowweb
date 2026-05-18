@@ -27,32 +27,22 @@
         <div class="section-divider" />
       </section>
 
-      <div class="toolbar" style="border-radius: 10px; padding: 1%;background-color: #080b0f;" >
+      <div class="toolbar" style="border-radius: 10px; padding: 1%;background-color: #080b0f;">
         <div style=" display: flex; flex-direction: column; justify-content: space-between; gap: 1.5vh">
           <div class="search-wrap">
             <i class="pi pi-search search-icon" />
-            <input v-model="searchText" type="text" placeholder="Buscar por título, marca, título..." class="search-input"
-              @input="onSearchInput" />
+            <input v-model="searchText" type="text" placeholder="Buscar por título, marca, título..."
+              class="search-input" @input="onSearchInput" />
             <button v-if="searchText" class="clear-btn" @click="searchText = ''; fetchProducts(1, true)"><i
                 class="pi pi-times" /></button>
           </div>
           <!-- Filtro de preço -->
           <div class="price-filter">
-            <input 
-              v-model.number="minPrice" 
-              type="number" 
-              placeholder="Min R$" 
-              class="price-input"
-              @input="onPriceInput"
-            />
+            <input v-model.number="minPrice" type="number" placeholder="Min R$" class="price-input"
+              @input="onPriceInput" />
             <span class="price-sep">-</span>
-            <input 
-              v-model.number="maxPrice" 
-              type="number" 
-              placeholder="Max R$" 
-              class="price-input"
-              @input="onPriceInput"
-            />
+            <input v-model.number="maxPrice" type="number" placeholder="Max R$" class="price-input"
+              @input="onPriceInput" />
             <button v-if="minPrice || maxPrice" class="clear-price-btn" @click="clearPriceFilter">
               <i class="pi pi-times" />
             </button>
@@ -65,73 +55,74 @@
             <i class="pi pi-trash" /> Limpar
           </button>
           <!-- Dropdown de filtros -->
-            <select v-model="clubFilter" class="filter-select" @change="fetchProducts(1, true)">
-              <option :value="undefined">Todos os clubes</option>
-              <option v-for="club in availableClubs" :key="club" :value="club">{{ club }}</option>
-            </select>
+          <select v-model="clubFilter" class="filter-select" @change="fetchProducts(1, true)">
+            <option :value="undefined">Todos os clubes</option>
+            <option v-for="club in availableClubs" :key="club" :value="club">{{ club }}</option>
+          </select>
 
-            <select v-model="brandFilter" class="filter-select" @change="fetchProducts(1, true)">
-              <option :value="undefined">Todas as marcas</option>
-              <option v-for="brand in availableBrands" :key="brand" :value="brand">{{ brand }}</option>
-            </select>
-            <select v-model="typeFilter" class="filter-select" @change="fetchProducts(1, true)">
-              <option :value="undefined">Todos os tipos</option>
-              <option value="FAN">Torcedor</option>
-              <option value="PLAYER">Jogador</option>
-            </select>
+          <select v-model="brandFilter" class="filter-select" @change="fetchProducts(1, true)">
+            <option :value="undefined">Todas as marcas</option>
+            <option v-for="brand in availableBrands" :key="brand" :value="brand">{{ brand }}</option>
+          </select>
+          <select v-model="typeFilter" class="filter-select" @change="fetchProducts(1, true)">
+            <option :value="undefined">Todos os tipos</option>
+            <option value="FAN">Torcedor</option>
+            <option value="PLAYER">Jogador</option>
+          </select>
 
-            <select v-model="genderFilter" class="filter-select" @change="fetchProducts(1, true)">
-              <option :value="undefined">Todos os gêneros</option>
-              <option value="MASCULINE">♂ Masculino</option>
-              <option value="FEMININE">♀ Feminino</option>
-              <option value="UNISEX">👥 Unissex</option>
-            </select>
+          <select v-model="genderFilter" class="filter-select" @change="fetchProducts(1, true)">
+            <option :value="undefined">Todos os gêneros</option>
+            <option value="MASCULINE">♂ Masculino</option>
+            <option value="FEMININE">♀ Feminino</option>
+            <option value="UNISEX">👥 Unissex</option>
+          </select>
 
-            <!-- Tamanhos categóricos -->
-            <select v-model="sizeCategoricalFilter" class="filter-select" @change="fetchProducts(1, true)">
-              <option :value="undefined">Tamanho (P/M/G)</option>
-              <option value="PP">PP</option>
-              <option value="P">P</option>
-              <option value="M">M</option>
-              <option value="G">G</option>
-              <option value="GG">GG</option>
-              <option value="XGG">XGG</option>
-              <option value="2XGG">2XGG</option>
-            </select>
+          <!-- Tamanhos categóricos -->
+          <select v-model="sizeCategoricalFilter" class="filter-select" @change="fetchProducts(1, true)">
+            <option :value="undefined">Tamanho (P/M/G)</option>
+            <option value="PP">PP</option>
+            <option value="P">P</option>
+            <option value="M">M</option>
+            <option value="G">G</option>
+            <option value="GG">GG</option>
+            <option value="XGG">XGG</option>
+            <option value="2XGG">2XGG</option>
+          </select>
 
-            <!-- Tamanhos numéricos -->
-            <select v-model="sizeNumericFilter" class="filter-select" @change="fetchProducts(1, true)">
-              <option :value="undefined">Tamanho (numérico)</option>
-              <option value="34">34</option>
-              <option value="35">35</option>
-              <option value="36">36</option>
-              <option value="37">37</option>
-              <option value="38">38</option>
-              <option value="39">39</option>
-              <option value="40">40</option>
-              <option value="41">41</option>
-              <option value="42">42</option>
-              <option value="43">43</option>
-              <option value="44">44</option>
-            </select>
+          <!-- Tamanhos numéricos -->
+          <select v-model="sizeNumericFilter" class="filter-select" @change="fetchProducts(1, true)">
+            <option :value="undefined">Tamanho (numérico)</option>
+            <option value="34">34</option>
+            <option value="35">35</option>
+            <option value="36">36</option>
+            <option value="37">37</option>
+            <option value="38">38</option>
+            <option value="39">39</option>
+            <option value="40">40</option>
+            <option value="41">41</option>
+            <option value="42">42</option>
+            <option value="43">43</option>
+            <option value="44">44</option>
+          </select>
 
-            <select v-model="viewMode" class="filter-select view-select">
-              <option value="list">Todos os produtos</option>
-              <option value="sections">Por categoria</option>
-            </select>
+          <select v-model="viewMode" class="filter-select view-select">
+            <option value="list">Todos os produtos</option>
+            <option value="sections">Por categoria</option>
+          </select>
 
-            <button class="type-chip my-team-btn" :class="{ active: myTeamFilter, 'chip-disabled': !isAuthenticated }"
-              :disabled="!isAuthenticated" @click="toggleMyTeamFilter">
-              ⭐ Meu time
-              <span v-if="isAuthenticated && myTeamCount > 0 && !myTeamFilter" class="team-count-badge">{{ myTeamCount
-              }}</span>
-            </button>
-          </div>
+          <button class="type-chip my-team-btn" :class="{ active: myTeamFilter, 'chip-disabled': !isAuthenticated }"
+            :disabled="!isAuthenticated" @click="toggleMyTeamFilter">
+            ⭐ Meu time
+            <span v-if="isAuthenticated && myTeamCount > 0 && !myTeamFilter" class="team-count-badge">{{ myTeamCount
+            }}</span>
+          </button>
+        </div>
       </div>
-        
+
 
       <!-- MODO SEÇÕES -->
-      <template v-if="viewMode === 'sections' && !searchText && !typeFilter && !genderFilter && !myTeamFilter && !brandFilter && !sizeFilter && !minPrice && !maxPrice">
+      <template
+        v-if="viewMode === 'sections' && !searchText && !typeFilter && !genderFilter && !myTeamFilter && !brandFilter && !sizeFilter && !minPrice && !maxPrice">
         <template v-for="cat in categories" :key="cat.slug">
           <section v-if="productsByCategory[cat.slug]?.length" class="category-section">
             <div class="section-header">
@@ -208,31 +199,25 @@ import type { ProductCategoryDef } from '@/types'
 const router = useRouter()
 const authStore = useAuthStore()
 const { user, isAuthenticated } = storeToRefs(authStore)
-const isAdmin = computed(() => (user.value as any)?.role === 'ADMIN')
 
 const products = ref<Product[]>([])
 const featured = ref<Product[]>([])
 const loading = ref(true)
 const pagination = ref({ page: 1, limit: 20, total: 0, totalPages: 0 })
 
-// Filtros unificados
+
 const searchText = ref('')
-const clubFilter = ref<string | undefined>(undefined)  // 🔥 NOVO: filtro por clube
+const clubFilter = ref<string | undefined>(undefined)
 const typeFilter = ref<'PLAYER' | 'FAN' | undefined>(undefined)
 const genderFilter = ref<'MASCULINE' | 'FEMININE' | 'UNISEX' | undefined>(undefined)
 const brandFilter = ref<string | undefined>(undefined)
-const sizeCategoricalFilter = ref<string | undefined>(undefined)  // P, M, G, GG...
-const sizeNumericFilter = ref<string | undefined>(undefined)      // 34, 35, 36...
+const sizeCategoricalFilter = ref<string | undefined>(undefined)
+const sizeNumericFilter = ref<string | undefined>(undefined)
 const minPrice = ref<number | undefined>(undefined)
 const maxPrice = ref<number | undefined>(undefined)
 const myTeamFilter = ref(false)
 const myTeamCount = ref(0)
 
-// Opções para selects
-const categoricalSizeOptions = ['PP', 'P', 'M', 'G', 'GG', 'XGG', '2XGG']
-const numericSizeOptions = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45']
-
-// Marcas disponíveis (extraídas dos produtos carregados)
 const availableBrands = computed(() => {
   const brands = new Set<string>()
   products.value.forEach(p => {
@@ -241,7 +226,7 @@ const availableBrands = computed(() => {
   return Array.from(brands).sort()
 })
 
-// 🔥 Clubes disponíveis (extraídos dos produtos carregados)
+
 const availableClubs = computed(() => {
   const clubs = new Set<string>()
   products.value.forEach(p => {
@@ -280,7 +265,7 @@ function clearPriceFilter() {
 
 function clearAllFilters() {
   searchText.value = ''
-  clubFilter.value = undefined      // 🔥 ADICIONAR
+  clubFilter.value = undefined
   typeFilter.value = undefined
   genderFilter.value = undefined
   brandFilter.value = undefined
@@ -303,7 +288,7 @@ async function fetchProducts(page = 1, reset = false) {
   if (reset) loading.value = true
   try {
     const filters: Record<string, any> = { page, limit: 20 }
-    
+
     // 🔥 ADICIONAR CLUB FILTER
     if (clubFilter.value) filters.club = clubFilter.value
     if (typeFilter.value) filters.type = typeFilter.value
@@ -311,20 +296,20 @@ async function fetchProducts(page = 1, reset = false) {
     if (brandFilter.value) filters.brand = brandFilter.value
     if (sizeCategoricalFilter.value) filters.sizeCategorical = sizeCategoricalFilter.value
     if (sizeNumericFilter.value) filters.sizeNumeric = sizeNumericFilter.value
-    
+
     if (minPrice.value !== undefined && minPrice.value > 0) {
       filters.minPrice = minPrice.value * 100 // converte para centavos
     }
     if (maxPrice.value !== undefined && maxPrice.value > 0) {
       filters.maxPrice = maxPrice.value * 100
     }
-    
+
     if (myTeamFilter.value && user.value?.favoriteTeam) {
       filters.club = user.value.favoriteTeam
     } else if (searchText.value.trim()) {
       filters.search = searchText.value.trim()
     }
-    
+
     const response = await productsService.list(filters)
     products.value = response.data
     pagination.value = response.pagination
@@ -345,7 +330,7 @@ async function fetchMyTeamCount() {
 
 function resetFilters() {
   searchText.value = ''
-  clubFilter.value = undefined      // 🔥 ADICIONAR
+  clubFilter.value = undefined
   typeFilter.value = undefined
   genderFilter.value = undefined
   brandFilter.value = undefined
@@ -1286,11 +1271,11 @@ body {
     align-items: center;
     justify-content: flex-end;
   }
-  
+
   .search-wrap {
     min-width: 240px;
   }
-  
+
   .filter-dropdowns {
     flex-wrap: nowrap;
   }
@@ -1301,11 +1286,11 @@ body {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .filter-select {
     width: 100%;
   }
-  
+
   .my-team-btn {
     justify-content: center;
   }
@@ -1412,7 +1397,7 @@ body {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .price-input {
     width: 100%;
   }

@@ -3,35 +3,24 @@
     <main class="main">
       <!-- Abas -->
       <div class="admin-tabs">
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'products' }"
-          @click="activeTab = 'products'"
-        >
+        <button class="tab-btn" :class="{ active: activeTab === 'products' }" @click="activeTab = 'products'">
           📦 Produtos
         </button>
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'users' }"
-          @click="activeTab = 'users'"
-        >
+        <button class="tab-btn" :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">
           👥 Usuários
         </button>
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'clubs' }"
-          @click="activeTab = 'clubs'"
-        >
+        <button class="tab-btn" :class="{ active: activeTab === 'clubs' }" @click="activeTab = 'clubs'">
           ⚽ Clubes
         </button>
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'categories' }"
-          @click="activeTab = 'categories'"
-        >
+        <button class="tab-btn" :class="{ active: activeTab === 'categories' }" @click="activeTab = 'categories'">
           🏷️ Categorias
         </button>
+        <button class="tab-btn" :class="{ active: activeTab === 'campaigns' }" @click="activeTab = 'campaigns'">
+          📣 Campanhas
+        </button>
       </div>
+
+
 
       <!-- ==================== ABA: PRODUTOS ==================== -->
       <div v-if="activeTab === 'products'">
@@ -60,7 +49,8 @@
           </div>
           <div class="type-filters">
             <button v-for="opt in typeOptions" :key="opt.value ?? 'all'" class="type-chip"
-              :class="{ active: typeFilter === opt.value }" @click="typeFilter = opt.value; onFilterChange()">{{ opt.label
+              :class="{ active: typeFilter === opt.value }" @click="typeFilter = opt.value; onFilterChange()">{{
+                opt.label
               }}</button>
           </div>
           <label class="show-inactive">
@@ -145,6 +135,170 @@
         </div>
       </div>
 
+      <!-- ==================== ABA: CAMPANHAS ==================== -->
+      <div v-if="activeTab === 'campaigns'" class="campaigns-section">
+        <div class="page-header">
+          <div class="header-left">
+            <h1 class="page-title">Campanhas</h1>
+            <p class="page-sub">Envie notificações em massa para seus clientes</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-primary" @click="openCampaignModal">
+              <i class="ti ti-send" aria-hidden="true"></i>
+              Nova campanha
+            </button>
+          </div>
+        </div>
+
+        <div class="campaigns-info">
+          <div class="info-card">
+            <i class="pi pi-users" />
+            <div>
+              <p class="info-title">Total de usuários</p>
+              <p class="info-value">{{ users.length }}</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <i class="pi pi-bell" />
+            <div>
+              <p class="info-title">Notificações enviadas</p>
+              <p class="info-value">{{ totalNotificationsSent || 0 }}</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <i class="pi pi-whatsapp" />
+            <div>
+              <p class="info-title">WhatsApp do admin</p>
+              <p class="info-value">{{ whatsappNumberFormatted }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="campaigns-tips">
+          <h3>💡 Dicas para campanhas eficazes</h3>
+          <ul>
+            <li>Use títulos chamativos e diretos</li>
+            <li>Mantenha a mensagem curta e objetiva</li>
+            <li>Segmentar por time do coração aumenta o engajamento</li>
+            <li>Evite enviar muitas mensagens para o mesmo usuário</li>
+          </ul>
+        </div>
+        <div class="campaigns-history">
+          <div class="history-header">
+            <h3>📋 Histórico de notificações</h3>
+            <button v-if="campaignsHistory.length > 0" class="btn-sm" @click="refreshCampaignsHistory">
+              <i class="pi pi-refresh" /> Atualizar
+            </button>
+          </div>
+
+          <div v-if="campaignsHistoryLoading" class="loading-state">
+            <ProgressSpinner strokeWidth="2" />
+          </div>
+
+          <div v-else-if="campaignsHistory.length === 0" class="empty-history">
+            <i class="pi pi-inbox" />
+            <p>Nenhuma notificação enviada ainda</p>
+            <span>Envie sua primeira campanha usando o botão "Nova campanha"</span>
+          </div>
+
+          <div v-else class="history-table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Mensagem</th>
+                  <th>Tipo</th>
+                  <th>Data</th>
+                  <th>Destinatários</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="notif in campaignsHistory" :key="notif.id">
+                  <td class="title-cell">{{ notif.title }}</td>
+                  <td class="message-cell">{{ notif.body }}</td>
+                  <td>
+                    <span class="type-badge" :class="`type-${notif.type}`">
+                      {{ getTypeLabel(notif.type) }}
+                    </span>
+                  </td>
+                  <td class="date-cell">{{ formatDate(notif.created_at) }}</td>
+                  <td class="count-cell">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ==================== MODAL DE CAMPANHA/NOTIFICAÇÃO ==================== -->
+      <div v-if="showCampaignModal" class="modal-overlay" @click="showCampaignModal = false">
+        <div class="modal modal-campaign" @click.stop>
+          <div class="modal-header">
+            <h2>Enviar Notificação</h2>
+            <button class="close-btn" @click="showCampaignModal = false"><i class="pi pi-times" /></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Título</label>
+              <input v-model="campaignForm.title" class="form-input" placeholder="Ex: Promoção de Natal" />
+            </div>
+            <div class="form-group">
+              <label>Mensagem</label>
+              <textarea v-model="campaignForm.body" class="form-input form-textarea" rows="4"
+                placeholder="Digite a mensagem..." />
+            </div>
+            <div class="form-group">
+              <label>Destinatários</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" value="all" v-model="campaignTargetType" />
+                  Todos os usuários
+                </label>
+                <label class="radio-label">
+                  <input type="radio" value="club" v-model="campaignTargetType" />
+                  Torcedores de um time
+                </label>
+                <label class="radio-label">
+                  <input type="radio" value="user" v-model="campaignTargetType" />
+                  Usuário específico
+                </label>
+              </div>
+            </div>
+            <div v-if="campaignTargetType === 'club'" class="form-group">
+              <label>Time</label>
+              <select v-model="campaignClub" class="form-input">
+                <option value="">Selecione um time</option>
+                <option v-for="club in campaignClubs" :key="club" :value="club">{{ club }}</option>
+              </select>
+            </div>
+            <div v-if="campaignTargetType === 'user'" class="form-group">
+              <label>Usuário</label>
+              <div class="user-select">
+                <input v-model="campaignUserSearch" type="text" class="form-input" placeholder="Buscar usuário..."
+                  @input="searchUsersForCampaign" />
+                <div v-if="campaignUserResults.length" class="user-results">
+                  <div v-for="user in campaignUserResults" :key="user.id" class="user-result-item"
+                    @click="selectUserForCampaign(user)">
+                    {{ user.name }} (@{{ user.username || user.email }})
+                  </div>
+                </div>
+                <div v-if="campaignSelectedUser" class="selected-user">
+                  <span>Enviar para: {{ campaignSelectedUser.name }}</span>
+                  <button class="remove-user" @click="campaignSelectedUser = null">×</button>
+                </div>
+              </div>
+            </div>
+            <p v-if="campaignError" class="error-msg">{{ campaignError }}</p>
+          </div>
+          <div class="modal-footer">
+            <button class="cancel-btn" @click="showCampaignModal = false">Cancelar</button>
+            <button class="save-btn" :disabled="campaignSending" @click="sendCampaign">
+              {{ campaignSending ? 'Enviando...' : 'Enviar notificação' }}
+            </button>
+          </div>
+        </div>
+      </div>
       <!-- ==================== ABA: USUÁRIOS ==================== -->
       <div v-if="activeTab === 'users'" class="users-section">
         <div class="page-header">
@@ -163,33 +317,44 @@
             <thead>
               <tr>
                 <th>Nome</th>
+                <th>Username</th>
                 <th>Email</th>
+                <th>Telefone</th>
                 <th>Time favorito</th>
                 <th>Favoritos</th>
-                <th>Telefone</th>
                 <th>Email verificado</th>
                 <th>Role</th>
                 <th>Cadastro</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="u in users" :key="u.id">
-                <td>{{ u.name }}</td>
-                <td>{{ u.email }}</td>
-                <td>{{ u.favorite_team || '-' }}</td>
-                <td>{{ u.wishlist_count || 0 }}</td>
-                <td>{{ u.phone || '-' }}</td>
-                <td>
+                <td class="name-cell">{{ u.name }}</td>
+                <td class="username-cell">@{{ u.username || u.email?.split('@')[0] }}</td>
+                <td class="email-cell">{{ u.email || '–' }}</td>
+                <td class="phone-cell">{{ u.phone || '–' }}</td>
+                <td class="team-cell">{{ u.favorite_team || '-' }}</td>
+                <td class="wishlist-cell">{{ u.wishlist_count || 0 }}</td>
+                <td class="verified-cell">
                   <span class="status-badge" :class="u.email_verified ? 'status-active' : 'status-inactive'">
                     {{ u.email_verified ? 'Verificado' : 'Não verificado' }}
                   </span>
                 </td>
-                <td>
+                <td class="role-cell">
                   <span class="role-badge" :class="u.role === 'ADMIN' ? 'badge-admin' : 'badge-user'">
                     {{ u.role || 'CUSTOMER' }}
                   </span>
                 </td>
-                <td>{{ formatDate(u.created_at) }}</td>
+                <td class="date-cell">{{ formatDate(u.created_at) }}</td>
+                <td class="actions-cell">
+                  <button class="action-btn notif-btn" @click="openCampaignModalForUser(u)" title="Enviar notificação">
+                    <i class="pi pi-bell" />
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="users.length === 0 && !usersLoading">
+                <td colspan="10" class="empty-row">Nenhum usuário cadastrado</td>
               </tr>
             </tbody>
           </table>
@@ -656,7 +821,7 @@ const editingProduct = ref<Product | null>(null)
 const saving = ref(false)
 const formError = ref('')
 
-const categoricalSizeOptions = ['PP', 'P', 'M', 'G', 'GG', 'XGG', '2XGG']
+const categoricalSizeOptions = ['PP', 'P', 'M', 'G', 'GG', 'GGG', 'GGGG']
 const numericSizesInput = ref('')
 const imageUrlsInput = ref('')
 const placeholder = 'https://placehold.co/60x60/0f172a/334155?text=TF'
@@ -739,7 +904,7 @@ const filteredProducts = computed(() => {
 const filteredClubs = computed(() => {
   if (!clubSearch.value) return clubsList.value
   const search = clubSearch.value.toLowerCase()
-  return clubsList.value.filter(c => 
+  return clubsList.value.filter(c =>
     c.name.toLowerCase().includes(search) ||
     c.country?.toLowerCase().includes(search)
   )
@@ -1043,10 +1208,10 @@ function openClubModal() {
 
 function editClub(club: any) {
   editingClub.value = club
-  clubForm.value = { 
-    name: club.name, 
-    country: club.country || 'Brasil', 
-    type: club.type || 'CLUB' 
+  clubForm.value = {
+    name: club.name,
+    country: club.country || 'Brasil',
+    type: club.type || 'CLUB'
   }
   clubError.value = ''
   showClubModal.value = true
@@ -1095,7 +1260,7 @@ async function saveClub() {
 
 async function deleteClub(club: any) {
   if (!confirm(`Tem certeza que deseja excluir o clube "${club.name}"?`)) return
-  
+
   try {
     await adminService.deleteClub(club.id)
     await loadClubs()
@@ -1194,6 +1359,177 @@ async function handleLogout() {
   router.push('/login')
 }
 
+// ==================== CAMPANHAS/NOTIFICAÇÕES ====================
+const showCampaignModal = ref(false)
+const campaignSending = ref(false)
+const campaignError = ref('')
+const campaignTargetType = ref('all')
+const campaignClub = ref('')
+const campaignClubs = ref<string[]>([])
+const campaignForm = ref({ title: '', body: '' })
+const campaignUserSearch = ref('')
+const campaignUserResults = ref<any[]>([])
+const campaignSelectedUser = ref<any>(null)
+
+
+const totalNotificationsSent = ref(0)
+const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER
+const whatsappNumberFormatted = computed(() => {
+  const num = whatsappNumber
+  if (num?.length === 13) {
+    return `+${num.slice(0, 2)} (${num.slice(2, 4)}) ${num.slice(4, 9)}-${num.slice(9)}`
+  }
+  return num || 'Não configurado'
+})
+
+
+const campaignsHistory = ref<any[]>([])
+const campaignsHistoryLoading = ref(false)
+
+async function loadCampaignOptions() {
+  try {
+    const result = await adminService.getCampaignOptions()
+    campaignClubs.value = result.data?.clubs || []
+  } catch (error) {
+    console.error('Failed to load campaign options:', error)
+  }
+}
+
+async function loadNotificationStats() {
+  try {
+    const stats = await adminService.getNotificationStats()
+    totalNotificationsSent.value = stats.total
+  } catch (error) {
+    console.error('Failed to load notification stats:', error)
+    totalNotificationsSent.value = 0
+  }
+}
+
+
+async function loadCampaignsHistory() {
+  campaignsHistoryLoading.value = true
+  try {
+    const result = await adminService.getCampaignHistory()
+    campaignsHistory.value = result || []
+  } catch (error) {
+    console.error('Failed to load campaigns history:', error)
+    campaignsHistory.value = []
+  } finally {
+    campaignsHistoryLoading.value = false
+  }
+}
+
+function refreshCampaignsHistory() {
+  loadCampaignsHistory()
+}
+
+function getTypeLabel(type: string): string {
+  switch (type) {
+    case 'admin_message': return '📢 Admin'
+    case 'new_product': return '🆕 Produto'
+    case 'order': return '📦 Pedido'
+    default: return 'ℹ️ Info'
+  }
+}
+
+function openCampaignModal() {
+  campaignForm.value = { title: '', body: '' }
+  campaignError.value = ''
+  campaignTargetType.value = 'all'
+  campaignClub.value = ''
+  campaignSelectedUser.value = null
+  campaignUserSearch.value = ''
+  campaignUserResults.value = []
+  showCampaignModal.value = true
+}
+
+function openCampaignModalForUser(user?: any) {
+  campaignForm.value = { title: '', body: '' }
+  campaignError.value = ''
+  campaignTargetType.value = user ? 'user' : 'all'
+  campaignSelectedUser.value = user || null
+  campaignUserSearch.value = ''
+  campaignUserResults.value = []
+  showCampaignModal.value = true
+}
+
+async function searchUsersForCampaign() {
+  if (!campaignUserSearch.value.trim()) {
+    campaignUserResults.value = []
+    return
+  }
+  const term = campaignUserSearch.value.toLowerCase()
+  campaignUserResults.value = users.value.filter(u =>
+    u.name.toLowerCase().includes(term) ||
+    u.email?.toLowerCase().includes(term) ||
+    u.username?.toLowerCase().includes(term)
+  ).slice(0, 10)
+}
+
+function selectUserForCampaign(user: any) {
+  campaignSelectedUser.value = user
+  campaignUserResults.value = []
+  campaignUserSearch.value = ''
+}
+
+async function sendCampaign() {
+  if (!campaignForm.value.title.trim() || !campaignForm.value.body.trim()) {
+    campaignError.value = 'Preencha título e mensagem'
+    return
+  }
+
+  let target: any = {}
+
+  if (campaignTargetType.value === 'club') {
+    if (!campaignClub.value) {
+      campaignError.value = 'Selecione um time'
+      return
+    }
+    target = { club: campaignClub.value }
+  } else if (campaignTargetType.value === 'user') {
+    if (!campaignSelectedUser.value) {
+      campaignError.value = 'Selecione um usuário'
+      return
+    }
+    target = { userIds: [campaignSelectedUser.value.id] }
+  } else {
+    target = {}
+  }
+
+  campaignSending.value = true
+  campaignError.value = ''
+  try {
+    await adminService.sendNotificationCampaign({
+      type: 'admin_message',
+      title: campaignForm.value.title,
+      body: campaignForm.value.body,
+      target,
+    })
+    toast.add({
+      severity: 'success',
+      summary: 'Notificação enviada',
+      detail: 'A mensagem foi enviada com sucesso.',
+      life: 3000,
+    })
+    showCampaignModal.value = false
+
+    setTimeout(() => {
+      loadCampaignsHistory()
+      loadNotificationStats()
+    }, 1000)
+  } catch (err: any) {
+    campaignError.value = err.response?.data?.message || 'Erro ao enviar notificação'
+    toast.add({
+      severity: 'error',
+      summary: 'Erro',
+      detail: campaignError.value,
+      life: 4000,
+    })
+  } finally {
+    campaignSending.value = false
+  }
+}
+
 // ==================== MOUNTED ====================
 onMounted(async () => {
   await Promise.all([
@@ -1202,12 +1538,14 @@ onMounted(async () => {
     loadCategories(),
     loadUsers(),
     loadClubs(),
+    loadCampaignOptions(),
+    loadNotificationStats(),
+    loadCampaignsHistory(),
   ])
 })
 </script>
 
 <style scoped>
-
 /* ── Raiz ─────────────────────────────────────────────────── */
 .admin-page {
   min-height: 100vh;
@@ -2378,6 +2716,7 @@ select.form-input {
 }
 
 @media (max-width: 480px) {
+
   .users-table th:nth-child(4),
   .users-table td:nth-child(4) {
     display: none;
@@ -2388,4 +2727,349 @@ select.form-input {
   }
 }
 
+/* Adicionar no style do AdminView */
+
+.username-cell {
+  font-family: monospace;
+  font-size: 12px;
+  color: #60a5fa;
+}
+
+.contact-cell {
+  text-align: center;
+}
+
+.contact-icons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+}
+
+.contact-icons i.pi-envelope {
+  color: #3fb950;
+}
+
+.contact-icons i.pi-whatsapp {
+  color: #16a34a;
+}
+
+.badge-warning {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #1e293b;
+  border-radius: 4px;
+  color: #64748b;
+}
+
+.notif-btn {
+  width: 30px;
+  height: 30px;
+  background: #0d2240;
+  color: #388bfd;
+}
+
+.notif-btn:hover {
+  background: #1f4280;
+  color: #60a5fa;
+}
+
+/* Modal de campanha */
+.modal-campaign {
+  max-width: 500px;
+}
+
+.user-select {
+  position: relative;
+}
+
+.user-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1c2330;
+  border: 1px solid #2d3748;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.user-result-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #8b949e;
+}
+
+.user-result-item:hover {
+  background: #222a38;
+  color: #f0f6fc;
+}
+
+.selected-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #0d2240;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.remove-user {
+  background: none;
+  border: none;
+  color: #f43f5e;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+}
+
+/* ==================== ABA: CAMPANHAS ==================== */
+.campaigns-section {
+  margin-top: 16px;
+}
+
+.campaigns-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.info-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #1c2330;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+}
+
+.info-card i {
+  font-size: 28px;
+  color: #388bfd;
+}
+
+.info-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #484f58;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px;
+}
+
+.info-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin: 0;
+}
+
+.campaigns-tips {
+  background: #0d2240;
+  border: 1px solid #1f4280;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.campaigns-tips h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #60a5fa;
+  margin: 0 0 12px;
+}
+
+.campaigns-tips ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.campaigns-tips li {
+  font-size: 13px;
+  color: #8b949e;
+  margin-bottom: 8px;
+}
+
+.campaigns-tips li:last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== HISTÓRICO DE CAMPANHAS ==================== */
+.campaigns-history {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #2d3748;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.history-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f0f6fc;
+  margin: 0;
+}
+
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #1c2330;
+  border: 1px solid #2d3748;
+  border-radius: 6px;
+  color: #8b949e;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-sm:hover {
+  border-color: #388bfd;
+  color: #388bfd;
+}
+
+.empty-history {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #1c2330;
+  border-radius: 12px;
+  border: 1px solid #2d3748;
+  text-align: center;
+}
+
+.empty-history i {
+  font-size: 36px;
+  color: #484f58;
+  margin-bottom: 12px;
+}
+
+.empty-history p {
+  font-size: 14px;
+  color: #8b949e;
+  margin: 0;
+}
+
+.empty-history span {
+  font-size: 12px;
+  color: #484f58;
+  margin-top: 6px;
+}
+
+.history-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table thead tr {
+  background: #1c2330;
+}
+
+.history-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: #484f58;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid #2d3748;
+}
+
+.history-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #1e2d3d;
+  font-size: 13px;
+  color: #8b949e;
+  vertical-align: middle;
+}
+
+.history-table tr:last-child td {
+  border-bottom: none;
+}
+
+.history-table tbody tr:hover td {
+  background: #222a38;
+}
+
+.title-cell {
+  font-weight: 600;
+  color: #f0f6fc;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-cell {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date-cell {
+  font-size: 12px;
+  color: #484f58;
+  white-space: nowrap;
+}
+
+.count-cell {
+  text-align: center;
+  color: #3fb950;
+}
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.type-admin_message {
+  background: #1f1635;
+  border: 1px solid #3d2b75;
+  color: #a371f7;
+}
+
+.type-info {
+  background: #1c2330;
+  border: 1px solid #2d3748;
+  color: #8b949e;
+}
+
+.type-new_product {
+  background: #0a2522;
+  border: 1px solid #0e3d38;
+  color: #3fb950;
+}
+
+.type-order {
+  background: #0d2240;
+  border: 1px solid #1f4280;
+  color: #388bfd;
+}
 </style>

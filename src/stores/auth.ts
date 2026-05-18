@@ -9,12 +9,10 @@ import {
 import type { User } from "@/types";
 
 export const useAuthStore = defineStore("auth", () => {
-  // State
   const user = ref<User | null>(null);
   const isAuthenticated = ref(false);
   const isLoading = ref(true);
 
-  // Actions
   async function login(input: LoginInput) {
     const result = await authService.login(input);
     localStorage.setItem("access_token", result.accessToken);
@@ -53,7 +51,7 @@ export const useAuthStore = defineStore("auth", () => {
    */
   async function hydrate() {
     const token = localStorage.getItem("access_token");
-    console.log("🔍 HYDRATE - step 1: token exists:", !!token);
+    // console.log("🔍 HYDRATE - step 1: token exists:", !!token);
 
     if (!token) {
       isLoading.value = false;
@@ -61,23 +59,23 @@ export const useAuthStore = defineStore("auth", () => {
     }
 
     isAuthenticated.value = true;
-    console.log("🔍 HYDRATE - step 2: isAuthenticated set to true");
+    // console.log("🔍 HYDRATE - step 2: isAuthenticated set to true");
 
     try {
-      console.log("🔍 HYDRATE - step 3: calling getMe()...");
+      // console.log("🔍 HYDRATE - step 3: calling getMe()...");
       const userData = await authService.getMe();
-      console.log("🔍 HYDRATE - step 4: getMe() returned:", userData);
+      // console.log("🔍 HYDRATE - step 4: getMe() returned:", userData);
       user.value = userData;
-      console.log("🔍 HYDRATE - step 5: user.value set to:", user.value);
+      // console.log("🔍 HYDRATE - step 5: user.value set to:", user.value);
     } catch (error) {
-      console.error("🔍 HYDRATE - step ERROR:", error);
+      console.error("🔍 HYDRATE failed:", error);
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       user.value = null;
       isAuthenticated.value = false;
     } finally {
       isLoading.value = false;
-      console.log("🔍 HYDRATE - step 6: isLoading set to false");
+      // console.log("🔍 HYDRATE - step 6: isLoading set to false");
     }
   }
 

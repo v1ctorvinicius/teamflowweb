@@ -101,13 +101,23 @@ export const adminService = {
     return data;
   },
 
-  async createClub(input: { name: string; country?: string; type?: string }): Promise<{ data: any }> {
+  async createClub(input: {
+    name: string;
+    country?: string;
+    type?: string;
+  }): Promise<{ data: any }> {
     const { data } = await api.post<{ data: any }>("/admin/clubs", input);
     return data;
   },
 
-  async updateClub(id: string, input: { name?: string; country?: string; type?: string }): Promise<{ data: any }> {
-    const { data } = await api.patch<{ data: any }>(`/admin/clubs/${id}`, input);
+  async updateClub(
+    id: string,
+    input: { name?: string; country?: string; type?: string },
+  ): Promise<{ data: any }> {
+    const { data } = await api.patch<{ data: any }>(
+      `/admin/clubs/${id}`,
+      input,
+    );
     return data;
   },
 
@@ -145,5 +155,42 @@ export const adminService = {
   async deleteCategory(slug: string) {
     const { data } = await api.delete(`/admin/categories/${slug}`);
     return data;
+  },
+
+  async getCampaignOptions(): Promise<{
+    data: { clubs: string[]; roles: string[] };
+  }> {
+    const { data } = await api.get("/admin/notifications/target-options");
+    return data;
+  },
+
+  async sendNotificationCampaign(input: {
+    type: string;
+    title: string;
+    body: string;
+    target: { club?: string; role?: string; userIds?: string[] };
+  }): Promise<{ count: number }> {
+    const { data } = await api.post("/admin/notifications/campaign", input);
+    return data.data;
+  },
+
+  async getNotificationStats(): Promise<{
+    total: number;
+    read: number;
+    unread: number;
+    byType: Array<{ type: string; count: number }>;
+  }> {
+    const { data } = await api.get("/admin/notifications/stats");
+    return data.data;
+  },
+
+  async getCampaignHistory(): Promise<any[]> {
+    const { data } = await api.get("/admin/notifications/history");
+    return data.data;
+  },
+
+  async getCampaignHistory(): Promise<any[]> {
+    const { data } = await api.get("/admin/notifications/history");
+    return data.data;
   },
 };

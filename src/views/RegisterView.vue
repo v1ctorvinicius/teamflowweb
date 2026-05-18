@@ -14,7 +14,6 @@
       </div>
     </div>
 
-
     <div class="auth-main">
       <div class="auth-card">
         <div class="auth-header">
@@ -23,50 +22,59 @@
         </div>
 
         <div class="form-body">
+          <!-- Nome completo -->
           <div class="form-group">
-            <label class="form-label">Nome</label>
+            <label class="form-label">Nome *</label>
             <div class="input-wrap">
               <i class="pi pi-user input-icon" />
-              <input 
-                v-model="name" 
-                type="text" 
-                class="form-input" 
-                :class="{ 'input-error': errors.name }"
-                placeholder="Seu nome" 
-                @blur="validate"
-              />
+              <input v-model="name" type="text" class="form-input" :class="{ 'input-error': errors.name }"
+                placeholder="Seu nome completo" @blur="validate" />
             </div>
             <span v-if="errors.name" class="field-error">{{ errors.name }}</span>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Email</label>
+            <label class="form-label">Nome de usuário *</label>
+            <div class="input-wrap">
+              <i class="pi pi-at input-icon" />
+              <input v-model="username" type="text" class="form-input" :class="{ 'input-error': errors.username }"
+                placeholder="ex: joao_silva" @blur="validate" autocomplete="username" />
+            </div>
+            <span v-if="errors.username" class="field-error">{{ errors.username }}</span>
+            <span v-else class="field-hint">Somente letras minúsculas, números e _</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              Email
+              <span class="label-optional">(opcional)</span>
+            </label>
             <div class="input-wrap">
               <i class="pi pi-envelope input-icon" />
-              <input 
-                v-model="email" 
-                type="email" 
-                class="form-input" 
-                :class="{ 'input-error': errors.email }"
-                placeholder="seu@email.com" 
-                @blur="validate"
-              />
+              <input v-model="email" type="email" class="form-input" :class="{ 'input-error': errors.email }"
+                placeholder="seu@email.com" @blur="validate" />
             </div>
             <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              Celular / WhatsApp
+              <span class="label-optional">(opcional)</span>
+            </label>
+            <div class="input-wrap">
+              <i class="pi pi-whatsapp input-icon" />
+              <input v-model="phone" type="tel" class="form-input" placeholder="(11) 99999-9999" @blur="validate" />
+            </div>
+            <span class="field-hint">Para contato fora do site</span>
           </div>
 
           <div class="form-group">
             <label class="form-label">Senha *</label>
             <div class="input-wrap">
               <i class="pi pi-lock input-icon" />
-              <input 
-                v-model="password" 
-                :type="showPassword ? 'text' : 'password'" 
-                class="form-input"
-                :class="{ 'input-error': errors.password }" 
-                placeholder="Mínimo 8 caracteres" 
-                @blur="validate"
-              />
+              <input v-model="password" :type="showPassword ? 'text' : 'password'" class="form-input"
+                :class="{ 'input-error': errors.password }" placeholder="Mínimo 8 caracteres" @blur="validate" />
               <button type="button" class="toggle-pass" @click="showPassword = !showPassword">
                 <i :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" />
               </button>
@@ -78,18 +86,11 @@
             <label class="form-label">Confirmar senha *</label>
             <div class="input-wrap">
               <i class="pi pi-lock input-icon" />
-              <input
-                v-model="confirmPassword"
-                type="password"
-                class="form-input"
-                :class="{ 'input-error': passwordError }"
-                placeholder="Digite a senha novamente"
-                @blur="validate"
-              />
+              <input v-model="confirmPassword" type="password" class="form-input"
+                :class="{ 'input-error': passwordError }" placeholder="Digite a senha novamente" @blur="validate" />
             </div>
             <span v-if="passwordError" class="field-error">{{ passwordError }}</span>
           </div>
-
 
           <div class="form-group">
             <label class="form-label">
@@ -99,15 +100,12 @@
             <div class="input-wrap select-wrap">
               <i class="pi pi-heart input-icon input-icon-heart" />
 
-
               <select v-if="clubsLoading" class="form-input form-select" disabled>
                 <option>Carregando times…</option>
               </select>
 
-
               <input v-else-if="clubsError" v-model="favoriteTeam" type="text" class="form-input"
                 placeholder="Ex: Flamengo, São Paulo…" />
-
 
               <select v-else v-model="favoriteTeam" class="form-input form-select">
                 <option value="">— Selecione seu time —</option>
@@ -147,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { clubsService, type Club } from '@/services/clubs'
@@ -156,23 +154,27 @@ import { useToast } from 'primevue/usetoast'
 const router = useRouter()
 const authStore = useAuthStore()
 
+// Form fields
 const name = ref('')
+const username = ref('')
 const email = ref('')
+const phone = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const favoriteTeam = ref('')
 const loading = ref(false)
 const showPassword = ref(false)
+
+// UI state
 const errors = ref<Record<string, string>>({})
 const serverError = ref('')
+const passwordError = ref('')
+const toast = useToast()
 
+// Clubs
 const clubs = ref<Club[]>([])
 const clubsLoading = ref(true)
 const clubsError = ref(false)
-
-const toast = useToast()
-const confirmPassword = ref('')
-const passwordError = ref('')
-const error = ref('')
 
 onMounted(async () => {
   try {
@@ -186,50 +188,55 @@ onMounted(async () => {
 
 const validate = () => {
   const e: Record<string, string> = {}
-  
+
   if (!name.value.trim()) e.name = 'Nome é obrigatório'
-  
-  if (!email.value.trim()) {
-    e.email = 'Email é obrigatório'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+
+  if (!username.value.trim()) {
+    e.username = 'Nome de usuário é obrigatório'
+  } else if (!/^[a-z0-9_]+$/.test(username.value)) {
+    e.username = 'Somente letras minúsculas, números e _'
+  } else if (username.value.length < 3) {
+    e.username = 'Mínimo 3 caracteres'
+  } else if (username.value.length > 50) {
+    e.username = 'Máximo 50 caracteres'
+  }
+
+  if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
     e.email = 'Email inválido'
   }
-  
+
   if (!password.value) {
     e.password = 'Senha é obrigatória'
   } else if (password.value.length < 8) {
     e.password = 'Senha deve ter no mínimo 8 caracteres'
   }
-  
+
   if (password.value !== confirmPassword.value) {
     passwordError.value = 'As senhas não coincidem'
   } else {
     passwordError.value = ''
   }
-  
+
   errors.value = e
   return Object.keys(e).length === 0 && !passwordError.value
 }
 
 async function handleRegister() {
   passwordError.value = ''
-  error.value = ''
   serverError.value = ''
 
-  if (!validate()) {
-    if (errors.value.name) {
-      // scroll ou focus no campo
-    }
-    return
-  }
+  if (!validate()) return
 
   loading.value = true
   try {
     await authStore.register({
+      username: username.value.toLowerCase(),
       name: name.value,
-      email: email.value,
+      email: email.value || undefined,
       password: password.value,
+      confirmPassword: confirmPassword.value,
       favoriteTeam: favoriteTeam.value || undefined,
+      phone: phone.value || undefined,
     })
     toast.add({
       severity: 'success',
@@ -237,7 +244,7 @@ async function handleRegister() {
       detail: 'Bem-vindo ao TeamFlow.',
       life: 3000,
     })
-    router.push('/')
+    router.go(0)
   } catch (err: any) {
     serverError.value = err.response?.data?.message || 'Erro ao criar conta. Tente novamente.'
     toast.add({

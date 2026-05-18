@@ -14,7 +14,8 @@ export interface ProductCategoryDef {
 
 export interface User {
   id: string;
-  email: string;
+  username: string;
+  email?: string;
   name: string;
   role?: string;
   favoriteTeam?: string;
@@ -46,14 +47,6 @@ export interface ChangePasswordInput {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
-}
-
-export interface AuthResponse {
-  data: {
-    user: User;
-    accessToken: string;
-    refreshToken: string;
-  };
 }
 
 export interface Product {

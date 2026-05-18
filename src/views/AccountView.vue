@@ -25,7 +25,6 @@
           </button>
         </div>
 
-
         <div v-show="activeTab === 'profile'" class="tab-content">
           <div class="section">
             <h2>Informações Pessoais</h2>
@@ -164,6 +163,44 @@
           </div>
         </div>
 
+        <!-- Aba: Notificações -->
+        <div v-show="activeTab === 'notifications'" class="tab-content">
+          <div class="section">
+            <div class="section-header">
+              <h2>Notificações</h2>
+              <button v-if="accountNotificationsUnread > 0" class="btn-sm" @click="markAllNotificationsRead">
+                Marcar todas como lidas
+              </button>
+            </div>
+
+            <div v-if="accountNotificationsLoading" class="loading-spinner">
+              <ProgressSpinner strokeWidth="2" />
+            </div>
+
+            <div v-else-if="accountNotifications.length === 0" class="empty-state">
+              <p>Nenhuma notificação</p>
+            </div>
+
+            <div v-else class="notifications-list">
+              <div v-for="notif in accountNotifications.slice(0, 10)" :key="notif.id" class="notif-item"
+                :class="{ 'notif-unread': !notif.read }" @click="markNotificationRead(notif.id)">
+                <div class="notif-icon" :class="`notif-icon--${notif.type}`">
+                  <i :class="iconForType(notif.type)" />
+                </div>
+                <div class="notif-info">
+                  <p class="notif-title">{{ notif.title }}</p>
+                  <p class="notif-text" v-html="formatMessageWithLinks(notif.body)"></p>
+                  <span class="notif-date">{{ formatNotificationDate(notif.created_at) }}</span>
+                </div>
+                <span v-if="!notif.read" class="notif-unread-dot" />
+              </div>
+            </div>
+
+            <router-link to="/notificacoes" class="see-all-link">
+              Ver todas as notificações →
+            </router-link>
+          </div>
+        </div>
 
         <div v-show="activeTab === 'orders'" class="tab-content">
           <div class="section">
@@ -181,13 +218,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { userService } from '@/services/user'
 import { clubsService, type Club } from '@/services/clubs'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { User, UpdateProfileInput, ChangePasswordInput } from '@/types'
+import { notificationsService } from '@/services/notifications'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -233,9 +271,14 @@ const passwordError = ref('')
 const passwordSuccess = ref('')
 const addressError = ref('')
 
+const accountNotifications = ref<any[]>([])
+const accountNotificationsLoading = ref(false)
+const accountNotificationsUnread = ref(0)
+
 const tabs = [
   { id: 'profile', label: 'Perfil' },
   { id: 'wishlist', label: '❤️ Favoritos' },
+  { id: 'notifications', label: '🔔 Notificações' },
   { id: 'orders', label: '📦 Pedidos' },
 ]
 
@@ -336,6 +379,42 @@ async function changePassword() {
   }
 }
 
+async function loadAccountNotifications() {
+  if (activeTab.value !== 'notifications') return
+  accountNotificationsLoading.value = true
+  try {
+    const result = await notificationsService.getNotifications()
+    accountNotifications.value = result.data.slice(0, 10)
+    accountNotificationsUnread.value = result.unreadCount
+  } catch (error) {
+    console.error('Failed to load notifications:', error)
+  } finally {
+    accountNotificationsLoading.value = false
+  }
+}
+
+async function markNotificationRead(id: string) {
+  const notif = accountNotifications.value.find(n => n.id === id)
+  if (notif?.read) return
+  try {
+    await notificationsService.markAsRead(id)
+    notif!.read = true
+    accountNotificationsUnread.value = Math.max(0, accountNotificationsUnread.value - 1)
+  } catch (error) {
+    console.error('Failed to mark as read:', error)
+  }
+}
+
+async function markAllNotificationsRead() {
+  try {
+    await notificationsService.markAllAsRead()
+    accountNotifications.value.forEach(n => n.read = true)
+    accountNotificationsUnread.value = 0
+  } catch (error) {
+    console.error('Failed to mark all as read:', error)
+  }
+}
+
 async function removeFromWishlist(productId: string) {
   try {
     await userService.removeFromWishlist(productId)
@@ -345,6 +424,40 @@ async function removeFromWishlist(productId: string) {
   }
 }
 
+function iconForType(type: string) {
+  switch (type) {
+    case 'new_product': return 'pi pi-tag'
+    case 'admin_message': return 'pi pi-user'
+    case 'order': return 'pi pi-shopping-cart'
+    default: return 'pi pi-info-circle'
+  }
+}
+
+function formatNotificationDate(date: string) {
+  const d = new Date(date)
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+  if (diff < 60 * 60 * 1000) {
+    const minutes = Math.floor(diff / 60000)
+    return `${minutes} minuto${minutes !== 1 ? 's' : ''} atrás`
+  }
+  if (diff < 24 * 60 * 60 * 1000) {
+    const hours = Math.floor(diff / (60 * 60 * 1000))
+    return `${hours} hora${hours !== 1 ? 's' : ''} atrás`
+  }
+  return d.toLocaleDateString('pt-BR')
+}
+
+function formatMessageWithLinks(text: string): string {
+  if (!text) return ''
+
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+
+  return text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="notif-link">${url}</a>`
+  })
+}
+
 onMounted(async () => {
   await Promise.all([
     loadProfile(),
@@ -352,6 +465,12 @@ onMounted(async () => {
     clubsService.list().then(c => { clubs.value = c }),
   ])
   loading.value = false
+})
+
+watch(activeTab, (tab) => {
+  if (tab === 'notifications') {
+    loadAccountNotifications()
+  }
 })
 </script>
 
@@ -686,5 +805,190 @@ onMounted(async () => {
 .construction-sub {
   color: #64748b;
   font-size: 12px;
+}
+
+/* ==================== ABA DE NOTIFICAÇÕES ==================== */
+
+/* Cabeçalho da seção */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin: 0;
+}
+
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #2d3748;
+  border-radius: 6px;
+  color: #8b949e;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-sm:hover {
+  border-color: #388bfd;
+  color: #388bfd;
+  background: #0d2240;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+/* Lista de notificações */
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: #161b22;
+  border: 1px solid #2d3748;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  position: relative;
+}
+
+.notif-item:hover {
+  background: #1c2330;
+  border-color: #3d4f68;
+}
+
+.notif-item.notif-unread {
+  background: #0d2240;
+  border-color: #1f4280;
+}
+
+/* Ícone da notificação */
+.notif-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.notif-icon--info {
+  background: #1c2330;
+  color: #8b949e;
+}
+
+.notif-icon--new_product {
+  background: #0a2522;
+  color: #3fb950;
+}
+
+.notif-icon--admin_message {
+  background: #1f1635;
+  color: #a371f7;
+}
+
+.notif-icon--order {
+  background: #0d2240;
+  color: #388bfd;
+}
+
+/* Conteúdo da notificação */
+.notif-info {
+  flex: 1;
+}
+
+.notif-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f0f6fc;
+  margin: 0 0 4px;
+}
+
+.notif-text {
+  font-size: 12px;
+  color: #8b949e;
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+
+.notif-date {
+  font-size: 10px;
+  color: #484f58;
+}
+
+/* Bolinha de não lida */
+.notif-unread-dot {
+  width: 8px;
+  height: 8px;
+  background: #388bfd;
+  border-radius: 8px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* Link "Ver todas" */
+.see-all-link {
+  display: inline-block;
+  font-size: 12px;
+  color: #60a5fa;
+  text-decoration: none;
+  margin-top: 8px;
+  transition: color 0.15s;
+}
+
+.see-all-link:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+/* Estado vazio */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8b949e;
+  background: #161b22;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+}
+
+.empty-state p {
+  font-size: 14px;
+  margin: 0;
+}
+
+.notif-text :deep(.notif-link) {
+  color: #60a5fa;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.notif-text :deep(.notif-link:hover) {
+  text-decoration: underline;
+  color: #93c5fd;
 }
 </style>

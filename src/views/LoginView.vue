@@ -14,7 +14,6 @@
       </div>
     </div>
 
-
     <div class="auth-main">
       <div class="auth-card">
         <div class="auth-header">
@@ -24,11 +23,11 @@
 
         <div class="form-body">
           <div class="form-group">
-            <label class="form-label">Email</label>
+            <label class="form-label">Usuário ou Email</label>
             <div class="input-wrap">
-              <i class="pi pi-envelope input-icon" />
-              <input v-model="email" type="email" class="form-input" placeholder="seu@email.com"
-                @keyup.enter="handleLogin" />
+              <i class="pi pi-user input-icon" />
+              <input v-model="login" type="text" class="form-input" placeholder="nome_de_usuario ou email"
+                @keyup.enter="handleLogin" autocomplete="username" />
             </div>
           </div>
 
@@ -69,11 +68,13 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToast()
 
-const email = ref('')
+const login = ref('')
 const password = ref('')
 const loading = ref(false)
 const showPassword = ref(false)
@@ -81,16 +82,22 @@ const errorMsg = ref('')
 
 const handleLogin = async () => {
   errorMsg.value = ''
-  if (!email.value || !password.value) {
+  if (!login.value || !password.value) {
     errorMsg.value = 'Preencha todos os campos'
     return
   }
   loading.value = true
   try {
-    await authStore.login({ email: email.value, password: password.value })
+    await authStore.login({ login: login.value, password: password.value })
+    toast.add({
+      severity: 'success',
+      summary: 'Bem-vindo!',
+      detail: 'Login realizado com sucesso.',
+      life: 3000,
+    })
     router.go(0)
   } catch {
-    errorMsg.value = 'Email ou senha inválidos'
+    errorMsg.value = 'Usuário, email ou senha inválidos'
   } finally {
     loading.value = false
   }
