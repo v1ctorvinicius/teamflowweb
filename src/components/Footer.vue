@@ -3,7 +3,7 @@
     <div class="footer-inner">
       <div class="footer-brand">
         <span style="font-size: 15px">⚽</span>
-        <span class="footer-brand-name">TeamFlow</span>
+        <span class="footer-brand-name">Camisaria André</span>
       </div>
       <p class="footer-tagline">O melhor do futebol, na sua camisa.</p>
 
@@ -56,7 +56,7 @@
       </div>
 
       <div class="footer-bottom">
-        <span class="footer-copy">© 2025 TeamFlow. Todos os direitos reservados.</span>
+        <span class="footer-copy">© 2025 Camisaria André. Todos os direitos reservados.</span>
         <div class="footer-social">
           <a href="#" class="social-btn" aria-label="Instagram" @click.prevent>
             <i class="pi pi-instagram" aria-hidden="true"></i>

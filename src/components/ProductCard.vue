@@ -102,7 +102,7 @@ const props = defineProps<{
 
 defineEmits<{ (e: 'view-details', id: string): void }>()
 
-const placeholder = 'https://placehold.co/400x400/0f172a/334155?text=TeamFlow'
+const placeholder = 'https://placehold.co/400x400/0f172a/334155?text=Camisaria André'
 const shareToast = ref('')
 
 const favoriteTeam = ref(props.userFavoriteTeam)

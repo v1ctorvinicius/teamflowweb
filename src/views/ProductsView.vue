@@ -27,15 +27,18 @@
         <div class="section-divider" />
       </section>
 
-      <div class="toolbar" style="border-radius: 10px; padding: 1%;background-color: #080b0f;">
-        <div style=" display: flex; flex-direction: column; justify-content: space-between; gap: 1.5vh">
+      <div class="toolbar" style="border-radius: 10px; padding: 1%; background-color: #080b0f;">
+        <div class="toolbar-inner">
+          <!-- Busca por texto -->
           <div class="search-wrap">
             <i class="pi pi-search search-icon" />
-            <input v-model="searchText" type="text" placeholder="Buscar por título, marca, título..."
-              class="search-input" @input="onSearchInput" />
-            <button v-if="searchText" class="clear-btn" @click="searchText = ''; fetchProducts(1, true)"><i
-                class="pi pi-times" /></button>
+            <input v-model="searchText" type="text" placeholder="Buscar por título, marca, clube..." class="search-input"
+              @input="onSearchInput" />
+            <button v-if="searchText" class="clear-btn" @click="searchText = ''; fetchProducts(1, true)">
+              <i class="pi pi-times" />
+            </button>
           </div>
+
           <!-- Filtro de preço -->
           <div class="price-filter">
             <input v-model.number="minPrice" type="number" placeholder="Min R$" class="price-input"
@@ -48,13 +51,27 @@
             </button>
           </div>
 
+          <!-- Linha de ações -->
+          <div class="filter-actions-row">
+            <button class="type-chip my-team-btn" :class="{ active: myTeamFilter, 'chip-disabled': !isAuthenticated }"
+              :disabled="!isAuthenticated" @click="toggleMyTeamFilter">
+              ⭐ Meu time
+              <span v-if="isAuthenticated && myTeamCount > 0 && !myTeamFilter" class="team-count-badge">{{ myTeamCount }}</span>
+            </button>
+
+            <button class="toggle-filters-btn" @click="showAdvancedFilters = !showAdvancedFilters">
+              <i :class="showAdvancedFilters ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" />
+              {{ showAdvancedFilters ? 'Menos filtros' : 'Mais filtros' }}
+            </button>
+
+            <button class="clear-filters-btn" @click="clearAllFilters">
+              <i class="pi pi-trash" /> Limpar
+            </button>
+          </div>
         </div>
-        <!-- Filtros agrupados -->
-        <div class="filters-group" style="flex-wrap: wrap;">
-          <button class="clear-filters-btn" @click="clearAllFilters">
-            <i class="pi pi-trash" /> Limpar
-          </button>
-          <!-- Dropdown de filtros -->
+
+        <!-- Filtros avançados (colapsáveis) -->
+        <div v-show="showAdvancedFilters" class="filters-group" style="flex-wrap: wrap; margin-top: 12px">
           <select v-model="clubFilter" class="filter-select" @change="fetchProducts(1, true)">
             <option :value="undefined">Todos os clubes</option>
             <option v-for="club in availableClubs" :key="club" :value="club">{{ club }}</option>
@@ -64,6 +81,7 @@
             <option :value="undefined">Todas as marcas</option>
             <option v-for="brand in availableBrands" :key="brand" :value="brand">{{ brand }}</option>
           </select>
+
           <select v-model="typeFilter" class="filter-select" @change="fetchProducts(1, true)">
             <option :value="undefined">Todos os tipos</option>
             <option value="FAN">Torcedor</option>
@@ -77,7 +95,6 @@
             <option value="UNISEX">👥 Unissex</option>
           </select>
 
-          <!-- Tamanhos categóricos -->
           <select v-model="sizeCategoricalFilter" class="filter-select" @change="fetchProducts(1, true)">
             <option :value="undefined">Tamanho (P/M/G)</option>
             <option value="PP">PP</option>
@@ -89,7 +106,6 @@
             <option value="2XGG">2XGG</option>
           </select>
 
-          <!-- Tamanhos numéricos -->
           <select v-model="sizeNumericFilter" class="filter-select" @change="fetchProducts(1, true)">
             <option :value="undefined">Tamanho (numérico)</option>
             <option value="34">34</option>
@@ -109,20 +125,12 @@
             <option value="list">Todos os produtos</option>
             <option value="sections">Por categoria</option>
           </select>
-
-          <button class="type-chip my-team-btn" :class="{ active: myTeamFilter, 'chip-disabled': !isAuthenticated }"
-            :disabled="!isAuthenticated" @click="toggleMyTeamFilter">
-            ⭐ Meu time
-            <span v-if="isAuthenticated && myTeamCount > 0 && !myTeamFilter" class="team-count-badge">{{ myTeamCount
-            }}</span>
-          </button>
         </div>
       </div>
 
-
       <!-- MODO SEÇÕES -->
       <template
-        v-if="viewMode === 'sections' && !searchText && !typeFilter && !genderFilter && !myTeamFilter && !brandFilter && !sizeFilter && !minPrice && !maxPrice">
+        v-if="viewMode === 'sections' && !searchText && !typeFilter && !genderFilter && !myTeamFilter && !brandFilter && !sizeCategoricalFilter && !sizeNumericFilter && !minPrice && !maxPrice">
         <template v-for="cat in categories" :key="cat.slug">
           <section v-if="productsByCategory[cat.slug]?.length" class="category-section">
             <div class="section-header">
@@ -217,6 +225,7 @@ const minPrice = ref<number | undefined>(undefined)
 const maxPrice = ref<number | undefined>(undefined)
 const myTeamFilter = ref(false)
 const myTeamCount = ref(0)
+const showAdvancedFilters = ref(false)
 
 const availableBrands = computed(() => {
   const brands = new Set<string>()
@@ -641,8 +650,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 2vh;
 }
+
+.toolbar-inner {
+  display: flex;
+   flex-direction: column; justify-content: space-between; gap: 1.5vh
+}
+
+
 
 .toolbar-left {
   display: flex;
@@ -1220,9 +1236,10 @@ body {
 /* Grupo de filtros */
 .filters-group {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 12px;
   width: 100%;
+
 }
 
 /* Dropdowns container */
@@ -1401,4 +1418,146 @@ body {
     width: 100%;
   }
 }
+
+/* Filtros em linha */
+.filter-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toggle-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.toggle-filters-btn:hover {
+  border-color: var(--blue-border);
+  color: var(--blue);
+  background: var(--blue-bg);
+}
+
+.clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.clear-filters-btn:hover {
+  border-color: var(--red-border);
+  color: var(--red);
+  background: var(--red-bg);
+}
+
+/* Filtro de preço */
+.price-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 8px;
+  height: 36px;
+}
+
+.price-input {
+  width: 80px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 0 4px;
+  outline: none;
+}
+
+.price-input::placeholder {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.price-sep {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.clear-price-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+/* Filtros agrupados */
+.filters-group {
+  display: flex;
+  flex-wrap: bowrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.filter-select {
+  height: 36px;
+  padding: 0 28px 0 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.filter-select:hover {
+  border-color: #3d4f68;
+  color: var(--text-primary);
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+  .filter-actions-row {
+    justify-content: space-between;
+  }
+  
+  .toggle-filters-btn,
+  .clear-filters-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .price-input {
+    width: 100%;
+  }
+}
+
 </style>

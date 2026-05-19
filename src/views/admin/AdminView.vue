@@ -868,8 +868,8 @@ const emptyForm = (): FormData => ({
   categorySlug: '',
   gender: 'UNISEX',
   allowPersonalization: false,
-  infiniteStock: false,
-  isNew: null,
+  infiniteStock: true,
+  isNew: false,
   isNewDays: 14,
   enableCategoricalSizes: true,
   categoricalSizesLabel: 'Tamanho',
@@ -1153,10 +1153,13 @@ async function saveProduct() {
     } else {
       const created = await adminService.createProduct(payload)
       products.value.unshift(created)
+      
+      editingProduct.value = created
+      
       toast.add({
         severity: 'success',
         summary: 'Produto criado',
-        detail: `${form.value.name} foi criado com sucesso.`,
+        detail: `${form.value.name} foi criado com sucesso. Agora você pode continuar editando.`,
         life: 3000,
       })
     }

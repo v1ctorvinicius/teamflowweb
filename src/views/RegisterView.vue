@@ -4,7 +4,7 @@
     <div class="auth-side">
       <div class="side-content">
         <div class="side-logo">⚽</div>
-        <h2 class="side-title">TeamFlow</h2>
+        <h2 class="side-title">Camisaria André</h2>
         <p class="side-sub">Crie sua conta e acompanhe o catálogo completo de camisetas</p>
         <div class="side-tags">
           <span class="side-tag">Jogador</span>
@@ -224,7 +224,8 @@ const validate = () => {
 async function handleRegister() {
   passwordError.value = ''
   serverError.value = ''
-
+  errors.value = {}
+  
   if (!validate()) return
 
   loading.value = true
@@ -241,16 +242,37 @@ async function handleRegister() {
     toast.add({
       severity: 'success',
       summary: 'Conta criada!',
-      detail: 'Bem-vindo ao TeamFlow.',
+      detail: 'Bem-vindo à Camisaria André.',
       life: 3000,
     })
     router.go(0)
   } catch (err: any) {
-    serverError.value = err.response?.data?.message || 'Erro ao criar conta. Tente novamente.'
+    const errorData = err.response?.data?.error
+    const errorCode = errorData?.code
+    const errorMessage = errorData?.message || err.response?.data?.message || 'Erro ao criar conta. Tente novamente.'
+
+    if (errorCode === 'CONFLICT') {
+      if (errorMessage.includes('username')) {
+        errors.value.username = 'Este nome de usuário já está em uso. Escolha outro.'
+        const usernameInput = document.querySelector('input[placeholder="ex: joao_silva"]') as HTMLInputElement
+        usernameInput?.focus()
+      } else if (errorMessage.includes('email')) {
+        errors.value.email = 'Este email já está cadastrado.'
+      } else {
+        serverError.value = errorMessage
+      }
+    } 
+    else if (errorCode === 'VALIDATION_ERROR') {
+      serverError.value = errorMessage
+    }
+    else {
+      serverError.value = errorMessage
+    }
+
     toast.add({
       severity: 'error',
       summary: 'Erro ao criar conta',
-      detail: serverError.value,
+      detail: serverError.value || errorMessage,
       life: 4000,
     })
   } finally {

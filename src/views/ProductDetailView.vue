@@ -771,6 +771,7 @@ onMounted(async () => {
   color: #8b949e;
   line-height: 1.6;
   margin: 0;
+  white-space: pre-line;
 }
 
 /* ── Ações ───────────────────────────────────────────────── */
