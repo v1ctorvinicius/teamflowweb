@@ -57,7 +57,7 @@
               <span class="price">{{ formatPrice(product.basePrice) }}</span>
               <span v-if="hasCustomization" class="price-original">{{ formatPrice(product.basePrice) }}</span>
             </div>
-            <span v-if="hasCustomization" class="customization-price">+ R$ 49,90 (personalização)</span>
+            <span v-if="hasCustomization" class="customization-price">+ Personalização pode acarretar em custo adicional</span>
           </div>
 
           <div class="size-section">
@@ -108,7 +108,7 @@
                 {{ customName ? customName : 'NOME' }}
                 {{ customNumber ? `#${customNumber}` : '#00' }}
               </span>
-              <span class="preview-info">+ R$ 49,90</span>
+              <span class="preview-info"></span>
             </div>
           </div>
 
@@ -150,7 +150,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import type { Product } from '@/types'
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598900000000'
-const CUSTOMIZATION_PRICE = 4990
+const CUSTOMIZATION_PRICE = 0
 const APP_BASE_URL = import.meta.env.VITE_APP_URL || window.location.origin
 
 const route = useRoute()
@@ -187,7 +187,6 @@ const numericSizesArray = computed<string[]>(() =>
 const formatPrice = (cents: number) =>
   (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-// 🔥 Funções para gênero
 function getGenderLabel(gender: string): string {
   switch (gender) {
     case 'MASCULINE': return '♂ Masculino'
@@ -214,7 +213,6 @@ const getStock = (size: string): number => {
   return 0
 }
 
-// 🔥 Respeita infiniteStock
 const hasStock = computed(() => {
   if (product.value?.infiniteStock) return true
   return selectedSize.value && getStock(selectedSize.value) > 0
