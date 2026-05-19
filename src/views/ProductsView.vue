@@ -237,7 +237,7 @@ const availableClubs = computed(() => {
 
 const categories = ref<ProductCategoryDef[]>([])
 const productsByCategory = ref<Record<string, Product[]>>({})
-const viewMode = ref<'sections' | 'list'>('list')
+const viewMode = ref<'sections' | 'list'>('sections')
 
 let debounceTimer: ReturnType<typeof setTimeout>
 let priceDebounceTimer: ReturnType<typeof setTimeout>
@@ -289,7 +289,6 @@ async function fetchProducts(page = 1, reset = false) {
   try {
     const filters: Record<string, any> = { page, limit: 20 }
 
-    // 🔥 ADICIONAR CLUB FILTER
     if (clubFilter.value) filters.club = clubFilter.value
     if (typeFilter.value) filters.type = typeFilter.value
     if (genderFilter.value) filters.gender = genderFilter.value
