@@ -1,0 +1,37 @@
+<TODO FRONTEND>
+
+1. fazer build correto
+    // "build": "vue-tsc -b && vite build",
+
+[ok]2.header maior que a tela do celular
+    adicionar hamburguer
+
+[ok]3.footer
+
+4. confirmação de senha por dois inputs
+
+5. reordenação pelo mobile não funciona. apenas mudando ordem das urls manualmente
+
+6. feedback ao atualizar informações do usuario no momento é um span na pagina, deve virar um toast
+
+7. cards em favoritos tem espaçamento variável conforme o título.
+
+8. produto com personalização é mais caro?
+
+9. colocar checkbox no painel admin para habilitar/desabilitar personalização. No momento todos os produtos estão aceitando
+
+10. colocar links corretos no rodapé
+
+11. permitir produtos com apenas tamanho sem especiicar estoque e não mostrar "esgotado"
+
+12. adicionar visualização de usuarios cadastrados e informações no painel do admin
+
+13. adicionar seleções (brasil, japão, etc.)
+
+[ok - site não dorme mais]14. mudar a tela inicial para "acordando o site, aguarda alguns segundos"
+
+15. feedback ao atualizar informações do produto deve virar um toast
+
+16. marca do produto não está aparecendo em lugar nenhum
+
+17. badge de "novo" no momento tem um tempo prazo padrão - deixar isso à cargo do admin escolhor (checkbox direto e tempo configurável)
