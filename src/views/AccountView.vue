@@ -536,6 +536,13 @@ watch(activeTab, (tab) => {
   gap: 8px;
   margin-bottom: 28px;
   border-bottom: 1px solid #334155;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-btn {
