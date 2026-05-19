@@ -63,6 +63,12 @@ router.beforeEach((to) => {
   const isAuthenticated = authStore.isAuthenticated;
   const isAdmin = (authStore.user as any)?.role === "ADMIN";
 
+    console.log('🔍 [Router] Rota:', to.path)
+  console.log('🔍 [Router] isAuthenticated:', isAuthenticated)
+  console.log('🔍 [Router] requiresAuth:', to.meta.requiresAuth)
+  console.log('🔍 [Router] requiresGuest:', to.meta.requiresGuest)
+  console.log('🔍 [Router] requiresAdmin:', to.meta.requiresAdmin)
+
   if (to.meta.requiresAdmin) {
     if (!isAuthenticated) return "/login";
     if (!isAdmin) return "/";

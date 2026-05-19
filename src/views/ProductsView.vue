@@ -480,7 +480,7 @@ onMounted(async () => {
 .page-title {
   font-size: 28px;
   font-weight: 700;
-  margin: 2vh 0;
+  margin: 0;
   color: var(--text-primary);
 }
 
@@ -500,14 +500,14 @@ onMounted(async () => {
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 16px;
+  width: 100%;
 }
 
 .section-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 14px;
-  margin: 2vh 0;
+  margin: 3vh 0;
 }
 
 .section-title {
@@ -827,7 +827,7 @@ onMounted(async () => {
 .filter-select {
   height: 40px;
   padding: 0 28px 0 12px;
-  background: var(--bg-primary);
+  background: #1a1d23;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
@@ -844,23 +844,6 @@ onMounted(async () => {
   background-size: 12px;
 }
 
-.filter-select option {
-  background-color: #1a1d23;
-  color: #e6edf3;
-  padding: 8px 12px;
-}
-
-.filter-select option:checked {
-  background: linear-gradient(#0969da, #0969da);
-  background-color: #0969da;
-  color: #ffffff;
-}
-
-.filter-select option:hover {
-  background-color: #0969da;
-  color: #ffffff;
-}
-
 .filter-select:hover {
   border-color: var(--border-light);
   color: var(--text-primary);
@@ -870,7 +853,6 @@ onMounted(async () => {
   outline: none;
   border-color: var(--blue);
   box-shadow: 0 0 0 2px var(--blue-bg);
-
 }
 
 /* Estilos da linha de ações dos filtros */
@@ -1024,6 +1006,22 @@ onMounted(async () => {
    RESPONSIVIDADE
    ============================================ */
 
+@media (min-width: 1400px) {
+  .featured-grid,
+  .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1399px) {
+  .featured-grid,
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
 @media (max-width: 1024px) {
   .filters-primary-row {
     grid-template-columns: 1fr 1fr;
@@ -1035,7 +1033,8 @@ onMounted(async () => {
 
   .featured-grid,
   .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 }
 
@@ -1110,7 +1109,7 @@ onMounted(async () => {
 
   .featured-grid,
   .products-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
   }
 
@@ -1154,7 +1153,7 @@ onMounted(async () => {
 
   .featured-grid,
   .products-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
 
   .pagination {

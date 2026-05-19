@@ -9,7 +9,7 @@ export const api = axios.create({
     }
 })
 
-// Interceptor para adicionar token em todas as requisições
+
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('access_token')
     if (token) {
@@ -18,7 +18,7 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-// Fila para requisições pendentes durante o refresh
+
 let isRefreshing = false
 let refreshSubscribers: ((token: string) => void)[] = []
 
@@ -31,18 +31,50 @@ function addRefreshSubscriber(cb: (token: string) => void) {
     refreshSubscribers.push(cb)
 }
 
-// Interceptor de response com refresh token
+
+const PUBLIC_ROUTES = [
+    '/products',
+    '/products/featured',
+    '/products/categories',
+    '/products/by-category',
+    '/products/slug/',
+    '/clubs',
+    '/health'
+]
+
+
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config
 
-        // Se não for 401 ou já tentou refresh, rejeita
+        
+        if (!error.response) {
+            console.error('Network error or server offline:', error.message)
+            return Promise.reject(error)
+        }
+
+        
+        const isPublicRoute = PUBLIC_ROUTES.some(route => 
+            originalRequest.url?.includes(route)
+        )
+
+        
+        if (isPublicRoute) {
+            
+            if (error.response?.status === 401) {
+                console.warn('Public route returned 401:', originalRequest.url)
+                return Promise.reject(error)
+            }
+            return Promise.reject(error)
+        }
+
+        
         if (error.response?.status !== 401 || originalRequest._retry) {
             return Promise.reject(error)
         }
 
-        // Evita loop infinito no endpoint /auth/refresh
+        
         if (originalRequest.url?.includes('/auth/refresh')) {
             localStorage.clear()
             window.location.href = '/login'
@@ -51,7 +83,7 @@ api.interceptors.response.use(
 
         originalRequest._retry = true
 
-        // Se já está fazendo refresh, aguarda na fila
+        
         if (!isRefreshing) {
             isRefreshing = true
 
@@ -75,7 +107,7 @@ api.interceptors.response.use(
                 onRefreshed(accessToken)
                 isRefreshing = false
 
-                // Reexecuta a requisição original
+                
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`
                 return api(originalRequest)
             } catch (refreshError) {
@@ -86,7 +118,7 @@ api.interceptors.response.use(
             }
         }
 
-        // Aguarda o refresh terminar e depois reexecuta
+        
         return new Promise((resolve) => {
             addRefreshSubscriber((token: string) => {
                 originalRequest.headers.Authorization = `Bearer ${token}`
