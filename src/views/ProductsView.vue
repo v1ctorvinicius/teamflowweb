@@ -133,8 +133,8 @@
         v-if="viewMode === 'sections' && !searchText && !typeFilter && !genderFilter && !myTeamFilter && !brandFilter && !sizeCategoricalFilter && !sizeNumericFilter && !minPrice && !maxPrice">
         <template v-for="cat in categories" :key="cat.slug">
           <section v-if="productsByCategory[cat.slug]?.length" class="category-section">
-            <div class="section-header" style="margin: 2vh 0;">
-              <h2 class="section-title" style="font-size: 2em">{{ cat.icon }} {{ cat.label }}</h2>
+            <div class="section-header" >
+              <h2 class="section-title" >{{ cat.icon }} {{ cat.label }}</h2>
               <button class="see-all-btn"
                 @click="viewMode = 'list'; typeFilter = undefined; genderFilter = undefined; searchText = ''; fetchProducts(1, true)">
                 Ver todos →
@@ -497,7 +497,7 @@ onMounted(async () => {
 .featured-grid,
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 16px;
 }
@@ -507,10 +507,11 @@ onMounted(async () => {
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 14px;
+  margin: 2vh 0;
 }
 
 .section-title {
-  font-size: 16px;
+  font-size: 2em;
   font-weight: 600;
   margin: 0;
   color: var(--text-primary);
