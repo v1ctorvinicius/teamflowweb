@@ -129,19 +129,19 @@
       </div>
 
       <!-- MODO SEÇÕES -->
-      <template
+      <template  
         v-if="viewMode === 'sections' && !searchText && !typeFilter && !genderFilter && !myTeamFilter && !brandFilter && !sizeCategoricalFilter && !sizeNumericFilter && !minPrice && !maxPrice">
         <template v-for="cat in categories" :key="cat.slug">
           <section v-if="productsByCategory[cat.slug]?.length" class="category-section">
-            <div class="section-header">
-              <h2 class="section-title">{{ cat.icon }} {{ cat.label }}</h2>
+            <div class="section-header" style="margin: 2vh 0;">
+              <h2 class="section-title" style="font-size: 2em">{{ cat.icon }} {{ cat.label }}</h2>
               <button class="see-all-btn"
                 @click="viewMode = 'list'; typeFilter = undefined; genderFilter = undefined; searchText = ''; fetchProducts(1, true)">
                 Ver todos →
               </button>
             </div>
 
-            <div class="products-grid">
+            <div class="products-grid" >
               <ProductCard v-for="product in productsByCategory[cat.slug]" :key="product.id" :product="product"
                 :user-favorite-team="user?.favoriteTeam" :is-authenticated="isAuthenticated"
                 @view-details="handleViewDetails" />
@@ -480,7 +480,7 @@ onMounted(async () => {
 .page-title {
   font-size: 28px;
   font-weight: 700;
-  margin: 3vh 0;
+  margin: 2vh 0;
   color: var(--text-primary);
 }
 
