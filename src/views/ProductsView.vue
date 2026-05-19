@@ -24,7 +24,7 @@
             :user-favorite-team="user?.favoriteTeam" :is-authenticated="isAuthenticated"
             @view-details="handleViewDetails" />
         </div>
-        <div class="section-divider" />
+        <!-- <div class="section-divider" /> -->
       </section>
 
       <div class="toolbar" style="border-radius: 10px; padding: 1%; background-color: #080b0f;">
@@ -145,9 +145,8 @@
               <ProductCard v-for="product in productsByCategory[cat.slug]" :key="product.id" :product="product"
                 :user-favorite-team="user?.favoriteTeam" :is-authenticated="isAuthenticated"
                 @view-details="handleViewDetails" />
-            </div>
+            </div>            
 
-            <div class="section-divider" />
           </section>
         </template>
 
@@ -159,15 +158,19 @@
 
       <!-- MODO LISTA -->
       <template v-else>
+
         <div v-if="loading" class="loading-state">
           <ProgressSpinner strokeWidth="3" />
           <p>Carregando produtos...</p>
         </div>
 
+
         <div v-else-if="products.length" class="products-grid">
+
           <ProductCard v-for="product in products" :key="product.id" :product="product"
             :user-favorite-team="user?.favoriteTeam" :is-authenticated="isAuthenticated"
             @view-details="handleViewDetails" />
+
         </div>
 
         <div v-else class="empty-state">
@@ -175,7 +178,7 @@
           <p class="empty-title">Nenhum produto encontrado</p>
           <p class="empty-sub">Tente ajustar os filtros</p>
           <button class="reset-btn" @click="resetFilters">Limpar filtros</button>
-        </div>
+        </div>    
 
         <div v-if="!loading && pagination.totalPages > 1" class="pagination">
           <button class="page-btn" :disabled="pagination.page <= 1" @click="fetchProducts(pagination.page - 1, true)">
@@ -477,7 +480,7 @@ onMounted(async () => {
 .page-title {
   font-size: 28px;
   font-weight: 700;
-  margin: 0;
+  margin: 3vh 0;
   color: var(--text-primary);
 }
 
@@ -866,8 +869,8 @@ onMounted(async () => {
   outline: none;
   border-color: var(--blue);
   box-shadow: 0 0 0 2px var(--blue-bg);
-}
 
+}
 
 /* Estilos da linha de ações dos filtros */
 .filter-actions-row {
@@ -1106,7 +1109,7 @@ onMounted(async () => {
 
   .featured-grid,
   .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 
@@ -1150,7 +1153,7 @@ onMounted(async () => {
 
   .featured-grid,
   .products-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .pagination {
