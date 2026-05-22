@@ -141,13 +141,13 @@ function toggleDrawer() {
 
 async function handleLogout() {
   await authStore.logout()
-  router.push('/login')
+  router.push('/')
 }
 
 async function handleDrawerLogout() {
   drawerOpen.value = false
   await authStore.logout()
-  router.push('/login')
+  router.push('/')
 }
 
 watch(isAuthenticated, (authenticated) => {
