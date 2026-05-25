@@ -91,7 +91,7 @@
 import { computed, watch, ref } from 'vue'
 import type { Product } from '@/types'
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598900000000'
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER
 const APP_BASE_URL = import.meta.env.VITE_APP_URL || window.location.origin
 
 const props = defineProps<{
