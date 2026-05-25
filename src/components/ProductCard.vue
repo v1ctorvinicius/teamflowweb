@@ -9,7 +9,23 @@
     <div v-if="!isFavoriteTeam && !product.isFeatured" class="top-banner banner-empty"></div>
 
     <div class="image-wrap">
-      <img :src="mainImage || placeholder" :alt="product.name" class="product-img" loading="lazy" />
+      <img :src="currentImage" :alt="product.name" class="product-img" loading="lazy" />
+
+      <div 
+        v-if="hasMultipleImages" 
+        class="image-dots" 
+        @click.stop.prevent
+        @mousedown.stop
+        @mouseup.stop
+      >
+        <button
+          v-for="(_, idx) in displayImages"
+          :key="idx"
+          class="dot"
+          :class="{ active: currentImageIdx === idx }"
+          @click.stop="setCurrentImage(idx)"
+        />
+      </div>
 
       <div v-if="showNewBadge && !isOutOfStock" class="badge-new">🔥 Novo</div>
 
@@ -19,7 +35,6 @@
     </div>
 
     <div class="card-body">
-      <!-- Clube e/ou Marca -->
       <p class="club-label">
         <span v-if="product.club">{{ product.club }}</span>
         <span v-if="product.club && product.brand" class="separator"> · </span>
@@ -105,12 +120,36 @@ defineEmits<{ (e: 'view-details', id: string): void }>()
 const placeholder = 'https://placehold.co/400x400/0f172a/334155?text=Camisaria André'
 const shareToast = ref('')
 
+// 🔥 Estado para controle de imagem atual
+const currentImageIdx = ref(0)
+const currentImage = ref(props.product.imageUrl || placeholder)
+
 const favoriteTeam = ref(props.userFavoriteTeam)
 watch(() => props.userFavoriteTeam, (v) => { favoriteTeam.value = v }, { immediate: true })
 
-const mainImage = computed(() =>
-  props.product.imageUrls?.[0] || props.product.imageUrl
-)
+// 🔥 Lista de imagens disponíveis
+const displayImages = computed(() => {
+  if (props.product.imageUrls?.length) return props.product.imageUrls
+  if (props.product.imageUrl) return [props.product.imageUrl]
+  return []
+})
+
+const hasMultipleImages = computed(() => displayImages.value.length > 1)
+
+function setCurrentImage(idx: number) {
+  if (idx >= 0 && idx < displayImages.value.length) {
+    currentImageIdx.value = idx
+    currentImage.value = displayImages.value[idx]
+  }
+}
+
+// 🔥 Reinicia para a primeira imagem quando o produto mudar
+watch(() => props.product.id, () => {
+  currentImageIdx.value = 0
+  currentImage.value = displayImages.value[0] || placeholder
+})
+
+const mainImage = computed(() => displayImages.value[0] || placeholder)
 
 const availableSizes = computed<string[]>(() => {
   if (props.product.enableCategoricalSizes) return props.product.stockCategorical || []
@@ -285,6 +324,54 @@ async function handleShare() {
 
 .product-card:hover .product-img {
   transform: scale(1.03);
+}
+
+/*Dots para múltiplas imagens */
+.image-dots {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;  
+  background: transparent;
+  z-index: 3;  
+}
+
+.dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dot::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: transparent;
+}
+
+.dot.active {
+  background: white;
+  width: 16px;
+  border-radius: 3px;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
 }
 
 /* badges */
