@@ -88,7 +88,6 @@
             </div>
           </div>
 
-          <!-- 🔥 Personalização (só se permitido) -->
           <div v-if="product.allowPersonalization" class="customization-section">
             <label class="label">Personalização (opcional)</label>
             <div class="customization-grid">
@@ -429,6 +428,7 @@ onMounted(async () => {
 
 .thumbnails {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 2px;
