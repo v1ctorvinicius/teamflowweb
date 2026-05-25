@@ -6,7 +6,7 @@
 
     <div v-if="isFavoriteTeam" class="top-banner banner-heart">🖤 Seu time</div>
     <div v-else-if="product.isFeatured" class="top-banner banner-featured">⭐ Destaque</div>
-    <div v-if="!isFavoriteTeam && !product.isFeatured" class="top-banner banner-empty">&nbsp;</div>
+    <div v-if="!isFavoriteTeam && !product.isFeatured" class="top-banner banner-empty"></div>
 
     <div class="image-wrap">
       <img :src="currentImage" :alt="product.name" class="product-img" loading="lazy" />
@@ -279,7 +279,8 @@ async function handleShare() {
 
 /* ── Banner de topo ─── */
 .top-banner {
-  height: 24px;
+  min-height: 24px;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,6 +305,9 @@ async function handleShare() {
 
 .banner-empty {
   background: transparent;
+  min-height: 24px;
+  height: 24px;
+  visibility: hidden;
 }
 
 /* ── Imagem ───────────────────────────────────────────────── */
