@@ -6,7 +6,7 @@
 
     <div v-if="isFavoriteTeam" class="top-banner banner-heart">🖤 Seu time</div>
     <div v-else-if="product.isFeatured" class="top-banner banner-featured">⭐ Destaque</div>
-    <div v-if="!isFavoriteTeam && !product.isFeatured" class="top-banner banner-empty"></div>
+    <div v-if="!isFavoriteTeam && !product.isFeatured" class="top-banner-placeholder"></div>
 
     <div class="image-wrap">
       <img :src="currentImage" :alt="product.name" class="product-img" loading="lazy" />
@@ -308,6 +308,11 @@ async function handleShare() {
   min-height: 24px;
   height: 24px;
   visibility: hidden;
+}
+
+.top-banner-placeholder {
+  height: 24px;
+  flex-shrink: 0;
 }
 
 /* ── Imagem ───────────────────────────────────────────────── */
@@ -668,4 +673,6 @@ async function handleShare() {
     opacity: 1;
   }
 }
+
+
 </style>
