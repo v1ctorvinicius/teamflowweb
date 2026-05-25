@@ -6,7 +6,7 @@
 
     <div v-if="isFavoriteTeam" class="top-banner banner-heart">🖤 Seu time</div>
     <div v-else-if="product.isFeatured" class="top-banner banner-featured">⭐ Destaque</div>
-    <div v-if="!isFavoriteTeam && !product.isFeatured" class="top-banner banner-empty"></div>
+    <div v-if="!isFavoriteTeam && !product.isFeatured" class="top-banner banner-empty">&nbsp;</div>
 
     <div class="image-wrap">
       <img :src="currentImage" :alt="product.name" class="product-img" loading="lazy" />
