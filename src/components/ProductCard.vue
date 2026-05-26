@@ -523,7 +523,7 @@ async function handleShare() {
 
 /* Opcional: ícone antes da temporada */
 .season-label::before {
-  content: '|';
+  content: '';
   font-size: 8px;
   opacity: 0.7;
 }
