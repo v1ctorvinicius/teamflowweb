@@ -511,8 +511,21 @@ async function handleShare() {
 }
 
 /* ────────────────────────────── */
+/* ── Temporada ─────────────────────────────────────────────── */
 .season-label {
-  display: none;
+  font-size: 1em;
+  color: #6e7681;
+  margin: 2px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Opcional: ícone antes da temporada */
+.season-label::before {
+  content: '|';
+  font-size: 8px;
+  opacity: 0.7;
 }
 
 /* ── Preço ────────────────────────────────────────────────── */
