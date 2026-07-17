@@ -2,7 +2,7 @@
   <div class="page">
 
     <div v-if="!isAuthenticated" class="guest-banner">
-      <span class="guest-banner-text">🎽 Crie uma conta grátis para ver estoque por tamanho, filtrar pelo seu time e
+      <span class="guest-banner-text">🎽 Crie uma conta grátis filtrar pelo seu time, favoritar produtos e
         muito mais</span>
       <router-link to="/register" class="guest-banner-cta">Criar conta</router-link>
     </div>
