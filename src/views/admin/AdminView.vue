@@ -1376,7 +1376,7 @@ const campaignSelectedUser = ref<any>(null)
 
 
 const totalNotificationsSent = ref(0)
-const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER
+const whatsappNumber = '5598986281919'
 const whatsappNumberFormatted = computed(() => {
   const num = whatsappNumber
   if (num?.length === 13) {
