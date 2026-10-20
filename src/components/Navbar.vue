@@ -3,7 +3,7 @@
     <div class="navbar-inner">
       <router-link to="/" class="brand">
         <span class="brand-icon">⚽</span>
-        <span class="brand-name">Camisaria André</span>
+        <span class="brand-name">TeamFlow</span>
       </router-link>
 
       <span v-if="isAuthenticated && user?.favoriteTeam" class="team-pill">

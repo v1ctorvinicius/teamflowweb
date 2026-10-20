@@ -5,7 +5,7 @@
       <div class="footer-header">
         <div class="footer-brand">
           <span style="font-size: 15px">⚽</span>
-          <span class="footer-brand-name">Camisaria André</span>
+          <span class="footer-brand-name">TeamFlow</span>
         </div>
         <p class="footer-tagline">O melhor do futebol, na sua camisa.</p>
       </div>
@@ -61,7 +61,7 @@
             <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="footer-link">
               <i class="pi pi-tiktok" aria-hidden="true"></i> TikTok
             </a>
-            <a href="mailto:contato@camisariaandre.com" class="footer-link">
+            <a href="mailto:contato@teamflow.com" class="footer-link">
               <i class="pi pi-envelope" aria-hidden="true"></i> E-mail
             </a>
             <a href="#" class="footer-link" @click.prevent>
@@ -112,7 +112,7 @@
       <!-- Bottom Section (sem os ícones sociais) -->
       <div class="footer-bottom">
         <div class="footer-bottom-left">
-          <span class="footer-copy">© 2025 Camisaria André. Todos os direitos reservados.</span>
+          <span class="footer-copy">© 2025 TeamFlow. Todos os direitos reservados.</span>
           <span class="footer-credit">Desenvolvido por <strong>Victor Santos</strong></span>
         </div>
       </div>

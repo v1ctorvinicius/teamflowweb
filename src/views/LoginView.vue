@@ -4,7 +4,7 @@
     <div class="auth-side">
       <div class="side-content">
         <div class="side-logo">⚽</div>
-        <h2 class="side-title">Camisaria André</h2>
+        <h2 class="side-title">TeamFlow</h2>
         <p class="side-sub">O catálogo oficial de camisetas do seu time</p>
         <div class="side-tags">
           <span class="side-tag">Jogador</span>

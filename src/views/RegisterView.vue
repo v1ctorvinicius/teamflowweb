@@ -4,7 +4,7 @@
     <div class="auth-side">
       <div class="side-content">
         <div class="side-logo">⚽</div>
-        <h2 class="side-title">Camisaria André</h2>
+        <h2 class="side-title">TeamFlow</h2>
         <p class="side-sub">Crie sua conta e acompanhe o catálogo completo de camisetas</p>
         <div class="side-tags">
           <span class="side-tag">Jogador</span>
@@ -242,7 +242,7 @@ async function handleRegister() {
     toast.add({
       severity: 'success',
       summary: 'Conta criada!',
-      detail: 'Bem-vindo à Camisaria André.',
+      detail: 'Bem-vindo à TeamFlow.',
       life: 3000,
     })
     router.go(0)
