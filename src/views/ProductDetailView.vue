@@ -148,7 +148,7 @@ import { useAuthStore } from '@/stores/auth'
 import ProgressSpinner from 'primevue/progressspinner'
 import type { Product } from '@/types'
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598900000000'
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598996281919'
 const CUSTOMIZATION_PRICE = 0
 const APP_BASE_URL = import.meta.env.VITE_APP_URL || window.location.origin
 

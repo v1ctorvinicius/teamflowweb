@@ -133,7 +133,7 @@ const { isAuthenticated, user } = storeToRefs(authStore)
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
 const whatsappLink = computed(() => `https://wa.me/${WHATSAPP_NUMBER}`)
 
-const DEV_WHATSAPP = '5598986281919';
+const DEV_WHATSAPP = '5598996281919';
 const devWhatsappLink = computed(() => `https://wa.me/${DEV_WHATSAPP}`)
 
 async function handleLogout() {

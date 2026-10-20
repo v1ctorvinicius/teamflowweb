@@ -77,7 +77,7 @@ const notifications = ref<Notification[]>([])
 const unreadCount = ref(0)
 const loading = ref(true)
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598986281919'
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5598996281919'
 const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}`
 
 const iconForType = (type: string) => {
